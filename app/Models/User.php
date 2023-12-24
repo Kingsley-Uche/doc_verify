@@ -16,8 +16,10 @@ class User extends Authenticatable implements MustVerifyEmail
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
+     * In addition to these, the user model has id and timestamp
      */
 
+//Category_id is the same as company_id
 
     protected $fillable = [
         'firstName',
@@ -26,7 +28,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone',
         'password',
         'category',
+        'category_id',
+        'user_company_id',
+        'created_by_user_id',
+        'email_verified_at',
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -46,4 +53,11 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'category_id');
+    }
 }
+
+
+

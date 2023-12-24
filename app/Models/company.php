@@ -11,10 +11,15 @@ class company extends Model
     protected $table = 'companies';
     protected $primaryKey ='id';
     protected $fillable= [
-        'name',
-        'industry',
-        'country_id',
+        'company_name',
+        'company_industry',
+        'company_country_id',
+        'company_created_by_user_id'
     ];
 
 
+    public function users()
+    {
+        return $this->hasMany(User::class, 'user_company_id');
+    }
 }

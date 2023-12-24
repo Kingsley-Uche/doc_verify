@@ -38,7 +38,7 @@ class AuthController extends Controller
             $credentials = $request->only('email', 'password');
 
 
-        
+
 
             // Check if the user's email is verified
             $user = User::where('email', $credentials['email'])->first();
@@ -52,7 +52,7 @@ class AuthController extends Controller
                     return response()->json(['token' => $token, 'user' => $user, 'message' => 'You have logged in successfully'], 200);
                 } else {
                     // Authentication failed
-                    return response()->json(['message' => 'Invalid credentials'], 401);
+                    return response()->json(['message' => 'Invalid username or email'], 401);
                 }
             } else {
                 // User's email is not verified

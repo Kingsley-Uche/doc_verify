@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use Otp;
 use App\Models\User;
 use App\Models\company;
+use App\Models\category_user;
 //use Hash;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -69,32 +70,29 @@ public function register(request $request){
         'category' => 'required|max:5',
         'country'=>'required|numeric|min:1',
         'company_name'=>'required|string|min:1',
+        'industry'=>'required|string',
 
     ]);
 
 
     if ($validator->fails()) {
 
-
        return  response()->json(['errors'=>$validator->errors()],422);
-
-
-
-
-
         //give feedback
     }else{
         $validatedData = $validator->validated();
+
 
 //save information
 
  // Validation passed
  //save information for company
 
- $company = company::create([
-            'name' =>strip_tags( ($request->input('company_name'))),
-            'industry' => strip_tags(($request->input('industry'))),
-            'country_id' =>strip_tags($request->input('country')),
+
+ $company= company::create([
+            'company_name' =>strtolower(strip_tags($validatedData['company_name'])),
+            'company_industry' => strtolower(strip_tags($validatedData['industry'])),
+            'company_country_id' =>strtolower(strip_tags($validatedData['country'])),
         ]);
 
 
@@ -104,22 +102,34 @@ public function register(request $request){
 
  $user =user::create(
     [
-        'firstName'=>strip_tags($request->input('firstName')),
-        'lastName'=>strip_tags($request->input('lastName')),
-        'phone'=>strip_tags ($request->input('phone')),
-        'category'=>strip_tags($request->input('category')),
-        'email'=>strip_tags($request->input('email')),
-        'password'=> Hash::make(strip_tags($request->input('password'))),
+        'firstName'=>strtolower(strip_tags($validatedData['firstName'])),
+        'lastName'=>strtolower(strip_tags($validatedData['lastName'])),
+        'phone'=>strtolower(strip_tags($validatedData['phone'])),
+
+        'email'=>strtolower(strip_tags($validatedData['email'])),
+        'password'=> Hash::make(strip_tags($validatedData['password'])),
+        'user_company_id'=>$company->id,
     ],
     );
+    //update comapny table to save the user that created the company;
+$user_id = user::latest()->first()->id;
+$company_id =company::latest()->first()->id;
 
+//the owner of the company
+$company->update([
+    'company_created_by_user_id'=>$user_id,
+]);
 
 $token =$user->createToken('api-token')->plainTextToken;
 
+//Save user in category table
+category_user::create([
+    'category_name'=>$validatedData['category'],
+    'category_user_id'=>$user_id,
+]);
+$category_id =category_user::latest()->first()->id;
 
-
-
-
+$user->update(['category_id'=>$category_id]);
        // $token =$user->createToken('api-token')->plainTextToken;
        $success['token']=$token;
        $success['user']=$user;
@@ -128,10 +138,6 @@ $token =$user->createToken('api-token')->plainTextToken;
        $user->notify(new EmailVerificationNotification);
 
        return response()->json($success,201);
-
-
-
-
 
     }
 
@@ -153,9 +159,8 @@ $token =$user->createToken('api-token')->plainTextToken;
             'phone' =>  ['regex:/^([0-9\s\-\+\(\)]*)$/'],
             'password'=>'required|min:6|confirmed',
             'country'=>'required|numeric|min:1',
-
-
         ]);
+
 
 
         if ($validator->fails()) {
