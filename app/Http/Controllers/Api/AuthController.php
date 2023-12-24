@@ -43,20 +43,26 @@ class AuthController extends Controller
             // Check if the user's email is verified
             $user = User::where('email', $credentials['email'])->first();
 
-            if ($user && $user->email_verified_at) {
+            if ($user && $user->email) {
                 // User's email is verified, attempt authentication
-                if (Auth::attempt($credentials)) {
+                if($user->email_verified_at){
+                     if (Auth::attempt($credentials)) {
                     $user = Auth::user();
                     $token = $user->createToken('api-token')->plainTextToken;
 
                     return response()->json(['token' => $token, 'user' => $user, 'message' => 'You have logged in successfully'], 200);
                 } else {
                     // Authentication failed
-                    return response()->json(['message' => 'Invalid username or email'], 401);
+                    return response()->json(['error'=>'invalid email or password','message' => 'Invalid email or password'], 401);
                 }
+
+                }else{
+                     return response()->json(['error'=>'email not verified', 'message' => 'Email not verified'], 401);
+                }
+
             } else {
                 // User's email is not verified
-                return response()->json(['message' => 'Email not verified'], 401);
+                return response()->json(['error'=>'Login failed', 'message' => 'Invalid username or password'], 401);
             }
 
 
@@ -72,9 +78,6 @@ class AuthController extends Controller
 
 
 
-    private function register_indv(request $request){
 
-
-    }
 
 }

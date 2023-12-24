@@ -221,6 +221,7 @@ $user->update(['category_id'=>$category_id]);
 $otp =new otp;
 
 $otp_status =$otp->validate($request->email, $request->otp);
+
 if(!$otp_status->status){
   return response()->json(['error'=>$otp, 'message'=>'Invalid otp'], 401);
 }
