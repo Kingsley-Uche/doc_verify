@@ -134,7 +134,7 @@ $user->update(['category_id'=>$category_id]);
        $success['token']=$token;
        $success['user']=$user;
        $success['message']="An otp has been sent to your email :".$request->email.'Kindly use it to verify your account';
-       $success['success']='true';
+       $success['success']=true;
        $user->notify(new EmailVerificationNotification);
 
        return response()->json($success,201);
@@ -199,7 +199,7 @@ $user->update(['category_id'=>$category_id]);
                    $success['token']=$token;
                    $success['user']=$user;
                    $success['message']="An otp has been sent to your email :".$request->email.'Kindly use it to verify your account';
-                   $success['success']='true';
+                   $success['success']=true;
                    $user->notify(new EmailVerificationNotification);
 
                    return response()->json($success,201);
@@ -216,10 +216,24 @@ $user->update(['category_id'=>$category_id]);
 
 
 
-    public function validateOtp(request $request){
+public function validateOtp(request $request){
 
 $otp =new otp;
 
+$validator = Validator::make($request->all(), [
+    'email' => 'required|email|'],
+);
+if ($validator->fails()) {
+
+
+    return  response()->json(['errors'=>$validator->errors()],422);
+
+
+
+
+
+     //give feedback
+ };
 $otp_status =$otp->validate($request->email, $request->otp);
 
 if(!$otp_status->status){
@@ -233,12 +247,12 @@ if ($user) {
     $time =now();
 
     User::where('email', $request->email)->update(['email_verified_at' =>now()]);
-    $success['success']='true';
+    $success['success']=true;
     $code =200;
     $message='Your email has been verified. You can login.';
 } else {
     // Handle the case when the user is not found
-    $success['success']='false';
+    $success['success']=false;
 
     $code =400;
     $message ='Invalid OTP';
@@ -246,7 +260,7 @@ if ($user) {
 
 
 
-return response()->json(['message'=>$message, 'success'=>$success, 'time'=>$time,],$code);
+return response()->json(['message'=>$message, $success, 'time'=>$time,],$code);
 
 
     }
@@ -349,7 +363,7 @@ if ($user) {
 
 } else {
     // Handle the case when the user is not found
-    $success['success']='false';
+    $success['success']=false;
 
     $code =400;
     $message ='Invalid OTP';

@@ -13,6 +13,8 @@ return new class extends Migration
      * The document name refers to the name of the document and can be certificates, etc.
      * The status refers to the stage of the document in the verifying line which can verified etc
      * In the event where a company verifies a  document, then that company can access all documents its verified using company_viewer_id
+     * document_owner_id  refers to the unique identity of the owner in doc_owner_table;
+     * document_ref_code is the unique code the owner can share to a third party to access the document on this portal
      * @return void
      */
     public function up()
@@ -20,13 +22,19 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->string('document_name');
-            $table->bigInteger('document_user_id');
+            $table->bigInteger('document_owner_id');
             $table->string('document_verifier_name');
-            $table->bigInteger('document_verifier_id');
-            $table->bigInteger('company_viewer_id')->nullable();
-            $table->string('document_type');
+            $table->bigInteger('document_verifier_id')->nullable();
+            $table->bigInteger('doc_verifier_country');
+            $table->bigInteger('document_viewer_id')->nullable();
+            //$table->string('document_type');//pdf or image
             $table->string('document_status');
-            $table->string('document_path');
+            $table->longText('document_ref_code');
+           // $table->string('document_path');
+            $table->string('doc_info');
+            $table->string('doc_matric_number');
+            $table->string('doc_start_year');
+            $table->string('doc_end_year');
             $table->timestamps();
         });
     }

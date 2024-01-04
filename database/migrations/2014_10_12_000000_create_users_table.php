@@ -17,7 +17,7 @@ class CreateUsersTable extends Migration
             $table->string('phone');
             $table->bigInteger('user_company_id')->nullable();
             $table->bigInteger('created_by_user_id')->nullable();
-            $table->BigInteger('category_id');
+            $table->BigInteger('category_id')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
