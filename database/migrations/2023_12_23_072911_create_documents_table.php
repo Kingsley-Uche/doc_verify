@@ -19,22 +19,29 @@ return new class extends Migration
      */
     public function up()
     {
+
+
+
+
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
-            $table->string('document_name');
+            $table->string('document_category');
             $table->bigInteger('document_owner_id');
             $table->string('document_verifier_name');
             $table->bigInteger('document_verifier_id')->nullable();
+            $table->string('document_verifier_city')->nullable();
             $table->bigInteger('doc_verifier_country');
             $table->bigInteger('document_viewer_id')->nullable();
-            //$table->string('document_type');//pdf or image
             $table->string('document_status');
             $table->longText('document_ref_code');
-           // $table->string('document_path');
-            $table->string('doc_info');
-            $table->string('doc_matric_number');
-            $table->string('doc_start_year');
-            $table->string('doc_end_year');
+           $table->string('document_qualification');
+            $table->string('doc_info')->nullable();
+            $table->string('doc_matric_number')->nullable();
+            $table->string('doc_start_year')->nullable();
+            $table->string('doc_end_year')->nullable();
+            $table->string('doc_dateOfIssue')->nullable();
+            $table->string('doc_course')->nullable();
+            $table->string('enrollment_status')->nullable();
             $table->timestamps();
         });
     }

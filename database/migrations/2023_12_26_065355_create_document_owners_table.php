@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('docOwnerFirstName');
             $table->string('docOwnerMiddleName')->nullable();
             $table->string('docOwnerLastName');
-            $table->timestamp('docOwnerDOB');
+            $table->string('docOwnerDOB');
             $table->longText('reference');
             $table->timestamps();
         });

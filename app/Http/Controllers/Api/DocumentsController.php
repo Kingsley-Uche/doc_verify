@@ -7,79 +7,244 @@ use Illuminate\Http\Request;
 use App\Models\document_owner;
 use App\Models\documents;
 use App\Models\document_file;
+use GrahamCampbell\ResultType\Success;
 use Illuminate\Support\Facades\Validator;
 
 
 class DocumentsController extends Controller
 {
     //
-    public function upload(request $request){
+    public function upload(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'firstName' => 'required|string',
+            'middleName' => 'string',
+            'lastName' => 'required|string',
+            'dob' => 'required|date_format:d-m-Y',
 
-        if($request->docType==='educ'){
-            //upload educational documents
-          $upload=  $this->upload_educ($request);
+        ]);
 
-
-        }else{
-            //upload others
-            $upload = $this->upload_others($request);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        dd($upload);
-        //validate documents
+        $educ = false;
+        $prof = false;
+        $fin = false;
+        $name = $request->firstName.'_'.$request->lastName;
+        for ($i = 0; $i < count($request->docType); $i++) {
+            if ($request->docType[$i] === 'educ') {
+                $educ = true;
+                $number_edu_docs = count($request->schoolNameEduc);
+            }
+            if ($request->docType[$i] == 'prof') {
+                $prof = true;
+                $number_prof_docs = count($request->schoolNameProf);
+            }
+
+        }
+
+        if ($educ === true) {
+            $validator = Validator::make($request->all(), [
+                'schoolNameEduc' => 'required|array',
+                'schoolNameEduc.*' => 'required|string',
+                'matricNumber' => 'required|array',
+                'matricNumber>.*' => 'required|string',
+                'dateOfIssue.*' => 'required|array',
+                'dateOfIssue.*' => 'required|date_format:d-m-Y',
+                'examBoard' => 'required|array',
+                'schoolCity' => 'required|array',
+                'schoolCity.*' => 'required|string',
+                'enrollmentYearEduc' => 'required|array',
+                'enrollmentYearEduc.*' => 'required|date_format:Y',
+                'graduationYearEduc' => 'required|array',
+                'graduationYearEduc.*' => 'required|date_format:Y',
+                'addInfo' => 'array',
+                'addInfo.*' => 'string',
+                'courseOrSubject' => 'required|array',
+                'courseOrSubject.*' => 'required|string',
+                'schoolCountryEduc' => 'required|array',
+                'schoolCountryEduc.*' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            // Handle upload for educational documents
+            // Implement saving document owner details
+            // Implement saving to the database
+        }
+
+        if ($prof === true) {
+            $validator = Validator::make($request->all(), [
+                'schoolNameProf' => 'required|array',
+                'schoolNameProf.*' => 'required|string',
+                'studentIdProf' => 'required|array',
+                'studentIdProf.*' => 'required|string',
+                'qualificationProf' => 'required|array',
+                'qualificationProf.*' => 'required|string',
+                'enrollmentYearProf' => 'required|array',
+                'enrollmentYearProf.*' => 'required|date_format:Y',
+                'graduationYearProf' => 'required|array',
+                'graduationYearProf.*' => 'required|string',
+                'addInfo' => 'array',
+                'addInfo.*' => 'string',
+                'courseOrSubject' => 'array',
+                'courseOrSubject.*' => 'required|string',
+                'enrolmentStatus' => 'array',
+                'enrolmentStatus.*' => 'required|string',
+                'schoolCountryProf' => 'required|array',
+                'schoolCountryProf.*' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            // Handle upload for professional documents
+            // Implement saving document owner details
+            // Implement saving to the database
+        }
+$reference = $request->firstName.'/'.substr(md5(uniqid(rand(),true)),0,8);
+
+        // Other processing logic...
+        // save doc owner's information
+
+       $document_owner = document_owner::create([
+            'docOwnerFirstName'=>strip_tags($request->firstName),
+            'docOwnerMiddleName'=>strip_tags($request->middleName),
+            'docOwnerLastName'=>strip_tags($request->lastName),
+            'docOwnerDOB'=>strip_tags($request->dob),
+            'reference'=>$reference, ]);
+    $doc_owner_id = document_owner::latest()->first()->id;
+
+    if(!empty($request->files)){
+        $docs = $request->files;
+
+        // if($docs->fileDocEduc){
+        //     echo 'available';
+        $validator = Validator::make($request->all(), [
+            'fileDocEduc.*' => 'required|file|mimes:pdf|max:2048', // Adjust the validation rules as needed
+        ]);
+        if($validator->fails()){
+            return response()->json(['errors' => $validator->errors(), 'success'=>false], 422);
+        }
+
+        //check for educational documents and upload
+
+
+        if(!empty($request->file('fileDocEduc'))){
+            $count =count($request->file('fileDocEduc'));
+
+            //upload docs
+        for($i=0;$i<$count;$i++){
+
+
+            $file = $request->file('fileDocEduc')[$i];
+
+
+            $ext = $file->getClientOriginalExtension();
+            $destinationPath = 'uploads/docs';
+            $newFileName = time() . '_' . $name;
+            $path = $destinationPath . '/' . $newFileName.'_educ_'. '.' . $ext;
+
+            // Move the file to the destination path
+            $file->move(public_path('uploads/docs'), $path);
+
+
+          //  $file = $request->file('fileDocProf')[0]
+
+
+        }
 
 
 
+        }
+
+ //Check for professional documents and upload
+
+ $validator = Validator::make($request->all(), [
+    'fileDocProf.*' => 'required|file|mimes:pdf|max:2048', // Adjust the validation rules as needed
+]);
+if($validator->fails()){
+    return response()->json(['errors' => $validator->errors()], 422);
+}
+
+if(!empty($request->file('fileDocProf'))){
+    $count =count($request->file('fileDocProf'));
+
+    //upload docs
+for($i=0;$i<$count;$i++){
 
 
-        // die();
-         $uploadedFiles = [];
-if(!empty($request->file)){
-    for ($i = 0; $i < count($request['file-name']); $i++) {
-        $name = $request['file-name'][$i];
+    $file = $request->file('fileDocProf')[$i];
 
 
+    $ext = $file->getClientOriginalExtension();
+    $destinationPath = 'uploads/docs';
+    $newFileName = time() . '_' . $name;
+    $path = $destinationPath . '/' . $newFileName.'_prof'.$ext;
 
-     $file=$request->file('document');
-    // dd($file[1]);
-     $ext=$file[$i]->getClientOriginalExtension();
-
-        // Use Laravel's file handling
-
-        $destinationPath ='uploads/docs'; // Set your desired storage path
-        $newFileName = time() . '_' . $name; // You can customize the new filename as needed
-        $path = $destinationPath . '/' . $newFileName.'.'.$ext;
-
-
-//$file[$i]->move(public_path('uploads/docs'),$path);
-
-
-
-        // Save information about the uploaded file
-        $uploadedFiles[] = [
-            'name' => $name,
-            'file' => $newFileName,
-            'path'=>$path,
-            'size' => $_FILES['document']['size'][$i],
-            'type' => $_FILES['document']['type'][$i],
-
-        ];
-//implement saving document owner detail
-//implement saving on database
-//return success message to indicate document has been saved.
+    // Move the file to the destination path
+    //$file->move(public_path('uploads/docs'), $path);
+    //
+  //  $file = $request->file('fileDocProf')[0]
 
 
 }
 
-}else{
+
 
 }
 
 
-    echo '<pre>';
-    var_dump($uploadedFiles);
-    echo '</pre>';
+//upload the documents information for education
+
+$educationData = [];
+$data =$request->all();
+
+foreach ($data['schoolCountryEduc'] as $key => $value) {
+    $educationData[] = [
+        'document_verifier_country' => $value,
+        'document_category' => $data['docType'][$key],
+        'document_owner_id'=>$doc_owner_id,
+        'matric_number' => $data['matricNumber'][$key],
+        'date_of_issue_educ' => $data['dateOfIssueEduc'][$key],
+        'exam_board' => $data['examBoard'][$key],
+        'document_verifier_name' => $data['schoolNameEduc'][$key],
+        'document_verifier_city' => $data['schoolCity'][$key],
+        'document_status'=>'submitted',
+        'document_ref_code'=> $request->firstName.'/'.substr(md5(uniqid(rand(),true)),0,8),
+        'doc_start_year' => $data['enrollmentYearEduc'][$key],
+        'doc_end_year' => $data['graduationYearEduc'][$key],
+        'doc_info' => $data['addInfo'][$key],
+        'doc_course' => $data['courseOrSubject'][$key],
+
+    ];
 }
+$docs = document::create($educationData);
+//Education::insert($educationData);
+
+
+
+
+
+
+
+    }else{
+
+      //files were not selected
+        return response()->json(['errors' =>'Select at least one file', 'success'=>false], 422);
+
+    }
+
+
+        // Other processing logic...
+
+        return response()->json(['message' => 'Upload successful', 'success'=>true], 201);
+    }
+
 
 
 private function upload_educ($request){
@@ -90,7 +255,7 @@ private function upload_educ($request){
         'lastName' => 'required|string|max:255',
         'dob'=>'required|string|',
         'matricNumber' => 'required|string|',
-        'dateOfIssue'=>'required|date',
+        'dateOfIssue'=>'required|array',
         'schoolName'=>'required|string',
         'schoolCity'=>'required|string',
         'schoolCountry'=>'required|numeric|min:1',
@@ -115,7 +280,7 @@ private function upload_educ($request){
 'docOwnerMiddleName'=>strtolower(strip_tags($validatedData['middleName'])),
 'docOwnerLastName'=>strtolower(strip_tags($validatedData['lastname'])),
 'docOwnerDOB'=>strip_tags($validatedData['dob']),
-'reference'=>$request->firstName.'/'.substr(md5(uniqid(rand(),true)),0,8),         ]);
+'reference'=>$request->firstName.'/'.substr(md5(uniqid(rand(),true)),0,8), ]);
 $docOwnerId = document_owner::latest()->first()->id;
 
 //save the document
@@ -172,5 +337,8 @@ if (!empty($request->file)) {
 
 }
      }
-    }
+
+     private function runner(){
+        echo 'we are here';
+     }
 }

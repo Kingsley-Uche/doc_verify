@@ -40,7 +40,18 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'api' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+            'hash' => false,
+            'expire' =>120, // Set the expiration time in minutes
+        ],
     ],
+
+
+
+
 
     /*
     |--------------------------------------------------------------------------

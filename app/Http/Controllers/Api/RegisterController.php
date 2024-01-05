@@ -159,6 +159,7 @@ $user->update(['category_id'=>$category_id]);
             'phone' =>  ['regex:/^([0-9\s\-\+\(\)]*)$/'],
             'password'=>'required|min:6|confirmed',
             'country'=>'required|numeric|min:1',
+            'category'=>'required|min:3'
         ]);
 
 
@@ -177,18 +178,27 @@ $user->update(['category_id'=>$category_id]);
         //validation has passed
 
             $validatedData = $validator->validated();
+
+
+
             $user =user::create(
                 [
                     'firstName'=>strip_tags($request->input('firstName')),
                     'lastName'=>strip_tags($request->input('lastName')),
                     'phone'=>strip_tags ($request->input('phone')),
-                    'category'=>strip_tags($request->input('category')),
                     'email'=>strip_tags($request->input('email')),
                     'password'=> Hash::make(strip_tags($request->input('password'))),
                 ],
                 );
+                $user_id = user::latest()->first()->id;
 
+                category_user::create([
+                    'category_name'=>$validatedData['category'],
+                    'category_user_id'=>$user_id,
+                ]);
+                $category_id =category_user::latest()->first()->id;
 
+                $user->update(['category_id'=>$category_id]);
             $token =$user->createToken('api-token')->plainTextToken;
 
 

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 
-class countriesController extends Controller
+class CountriesController extends Controller
 {
     //
 
@@ -23,7 +23,7 @@ class countriesController extends Controller
             //it is from our frontend
         }else{
 
-
+dd($request->all());
             //it is not from our frontend
             return response()->json(['message' => 'Invalid Access'],400);
         }

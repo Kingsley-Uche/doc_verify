@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('otp:clean')->hourly();
+        $schedule->command('sanctum:clear-tokens')->daily();
     }
 
     /**
@@ -30,5 +31,11 @@ class Kernel extends ConsoleKernel
 
         require base_path('routes/console.php');
     }
+    // Inside the commands array in App\Console\Kernel.php
+
+protected $commands = [
+    Commands\ClearExpiredTokens::class,
+];
+
 
 }
