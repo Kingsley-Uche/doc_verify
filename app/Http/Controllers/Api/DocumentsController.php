@@ -2,343 +2,313 @@
 
 namespace App\Http\Controllers\api;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\document_owner;
-use App\Models\documents;
-use App\Models\document_file;
-use GrahamCampbell\ResultType\Success;
+use App\Models\FinancialDocuments;
+use App\Http\Controllers\Controller;
+use App\Models\EducationalDocuments;
+use Illuminate\Support\Facades\Auth;
+use App\Models\ProfessionalDocuments;
 use Illuminate\Support\Facades\Validator;
-
 
 class DocumentsController extends Controller
 {
-    //
     public function upload(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'firstName' => 'required|string',
-            'middleName' => 'string',
+            'firstName' =>'required|string',
+            'middleName' =>'string',
             'lastName' => 'required|string',
-            'dob' => 'required|date_format:d-m-Y',
-
+            'dob' =>'required|date_format:d-m-Y',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $educ = false;
-        $prof = false;
-        $fin = false;
-        $name = $request->firstName.'_'.$request->lastName;
-        for ($i = 0; $i < count($request->docType); $i++) {
-            if ($request->docType[$i] === 'educ') {
-                $educ = true;
-                $number_edu_docs = count($request->schoolNameEduc);
-            }
-            if ($request->docType[$i] == 'prof') {
-                $prof = true;
-                $number_prof_docs = count($request->schoolNameProf);
-            }
+        $name = $request->firstName . '_' . $request->lastName;
 
+
+
+
+
+
+
+
+        $response_educ = $this->validateDocuments($request, 'fileDocEduc');
+        $response_prof = $this->validateDocuments($request,'fileDocProf');
+        $response_fin = $this->validateDocuments($request, 'fileDocFin');
+
+        if (
+            (is_array($response_educ) && array_key_exists('errors', $response_educ)) ||
+            (is_array($response_prof) && array_key_exists('errors', $response_prof)) ||
+            (is_array($response_fin) && array_key_exists('errors', $response_fin))
+        ) {
+            return response()->json(['errors' => 'Only pdf files allowed', 'success' => false], 422);
         }
 
-        if ($educ === true) {
+
+
+        //validate documents
+        $errors =[];
+        if($request->schoolNameEduc||$request->matricNumber||$request->enrollmentYearEduc||$request->schoolCountryEduc||$request->graduationYearEduc){
             $validator = Validator::make($request->all(), [
-                'schoolNameEduc' => 'required|array',
-                'schoolNameEduc.*' => 'required|string',
-                'matricNumber' => 'required|array',
-                'matricNumber>.*' => 'required|string',
-                'dateOfIssue.*' => 'required|array',
-                'dateOfIssue.*' => 'required|date_format:d-m-Y',
-                'examBoard' => 'required|array',
-                'schoolCity' => 'required|array',
-                'schoolCity.*' => 'required|string',
-                'enrollmentYearEduc' => 'required|array',
-                'enrollmentYearEduc.*' => 'required|date_format:Y',
-                'graduationYearEduc' => 'required|array',
-                'graduationYearEduc.*' => 'required|date_format:Y',
-                'addInfo' => 'array',
-                'addInfo.*' => 'string',
-                'courseOrSubject' => 'required|array',
-                'courseOrSubject.*' => 'required|string',
-                'schoolCountryEduc' => 'required|array',
-                'schoolCountryEduc.*' => 'required|string',
-            ]);
+                                'schoolNameEduc' => 'required|array',
+                                'schoolNameEduc.*' => 'required|string',
+                                'matricNumber' => 'required|array',
+                                'matricNumber.*' => 'required|string',
+                                'dateOfIssueEduc' => 'required|array',
+                                'dateOfIssueEduc.*' => 'required|date_format:d-m-Y',
+                                'examBoard' => 'required|array',
+                                'examBoard.*' => 'required|string',
+                                'schoolCity' => 'required|array',
+                                'schoolCity.*' => 'required|string',
+                                'enrollmentYearEduc' => 'required|array',
+                                'enrollmentYearEduc.*' => 'required|date_format:Y',
+                                'graduationYearEduc' => 'required|array',
+                                'graduationYearEduc.*' => 'required|date_format:Y',
+                                'addInfo' => 'array',
+                                'addInfo.*' => 'string',
+                                'courseOrSubject' => 'required|array',
+                                'courseOrSubject.*' => 'required|string',
+                                'schoolCountryEduc' => 'required|array',
+                                'schoolCountryEduc.*' => 'required|string',
+                            ]);
 
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
+                            if ($validator->fails()) {
+                               // return response()->json(['errors' => $validator->errors()], 422);
+                               $err['errors']=$validator->errors()->toArray();
+                               $errors[] =$err;
+                            }
 
-            // Handle upload for educational documents
-            // Implement saving document owner details
-            // Implement saving to the database
+
+
+
+
+
+
         }
 
-        if ($prof === true) {
+        if($request->schoolNameProf||$request->studentIdProf||$request->enrollmentYearProf||$request->schoolCountryProf||$request->graduationYearProf){
+
+
+
             $validator = Validator::make($request->all(), [
-                'schoolNameProf' => 'required|array',
-                'schoolNameProf.*' => 'required|string',
-                'studentIdProf' => 'required|array',
-                'studentIdProf.*' => 'required|string',
-                'qualificationProf' => 'required|array',
-                'qualificationProf.*' => 'required|string',
-                'enrollmentYearProf' => 'required|array',
-                'enrollmentYearProf.*' => 'required|date_format:Y',
-                'graduationYearProf' => 'required|array',
-                'graduationYearProf.*' => 'required|string',
-                'addInfo' => 'array',
-                'addInfo.*' => 'string',
-                'courseOrSubject' => 'array',
-                'courseOrSubject.*' => 'required|string',
-                'enrolmentStatus' => 'array',
-                'enrolmentStatus.*' => 'required|string',
-                'schoolCountryProf' => 'required|array',
-                'schoolCountryProf.*' => 'required|string',
-            ]);
+                                'schoolNameProf' => 'required|array',
+                                'schoolNameProf.*' => 'required|string',
+                                'studentIdProf' => 'required|array',
+                                'studentIdProf.*' => 'required|string',
+                                'qualificationProf' => 'required|array',
+                                'qualificationProf.*' => 'required|string',
+                                'enrollmentYearProf' => 'required|array',
+                                'enrollmentYearProf.*' => 'required|date_format:Y',
+                                'graduationYearProf' => 'required|array',
+                                'graduationYearProf.*' => 'required|string',
+                                'addInfo' => 'array',
+                                'addInfo.*' => 'string',
+                                'profCourse' => 'array',
+                                'profCourse.*' => 'required|string',
+                                'enrolmentStatus' => 'array',
+                                'enrolmentStatus.*' => 'required|string',
+                                'schoolCountryProf' => 'required|array',
+                                'schoolCountryProf.*' => 'required|string',
+                            ]);
 
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
+                            if ($validator->fails()) {
+                                $err=$validator->errors()->toArray();
+                                $errors[] =$err;
 
-            // Handle upload for professional documents
-            // Implement saving document owner details
-            // Implement saving to the database
-        }
-$reference = $request->firstName.'/'.substr(md5(uniqid(rand(),true)),0,8);
-
-        // Other processing logic...
-        // save doc owner's information
-
-       $document_owner = document_owner::create([
-            'docOwnerFirstName'=>strip_tags($request->firstName),
-            'docOwnerMiddleName'=>strip_tags($request->middleName),
-            'docOwnerLastName'=>strip_tags($request->lastName),
-            'docOwnerDOB'=>strip_tags($request->dob),
-            'reference'=>$reference, ]);
-    $doc_owner_id = document_owner::latest()->first()->id;
-
-    if(!empty($request->files)){
-        $docs = $request->files;
-
-        // if($docs->fileDocEduc){
-        //     echo 'available';
-        $validator = Validator::make($request->all(), [
-            'fileDocEduc.*' => 'required|file|mimes:pdf|max:2048', // Adjust the validation rules as needed
-        ]);
-        if($validator->fails()){
-            return response()->json(['errors' => $validator->errors(), 'success'=>false], 422);
-        }
-
-        //check for educational documents and upload
+                            }
 
 
-        if(!empty($request->file('fileDocEduc'))){
-            $count =count($request->file('fileDocEduc'));
-
-            //upload docs
-        for($i=0;$i<$count;$i++){
-
-
-            $file = $request->file('fileDocEduc')[$i];
-
-
-            $ext = $file->getClientOriginalExtension();
-            $destinationPath = 'uploads/docs';
-            $newFileName = time() . '_' . $name;
-            $path = $destinationPath . '/' . $newFileName.'_educ_'. '.' . $ext;
-
-            // Move the file to the destination path
-            $file->move(public_path('uploads/docs'), $path);
-
-
-          //  $file = $request->file('fileDocProf')[0]
 
 
         }
 
 
+        if($request->bank_name){
 
-        }
-
- //Check for professional documents and upload
-
- $validator = Validator::make($request->all(), [
-    'fileDocProf.*' => 'required|file|mimes:pdf|max:2048', // Adjust the validation rules as needed
-]);
-if($validator->fails()){
-    return response()->json(['errors' => $validator->errors()], 422);
-}
-
-if(!empty($request->file('fileDocProf'))){
-    $count =count($request->file('fileDocProf'));
-
-    //upload docs
-for($i=0;$i<$count;$i++){
-
-
-    $file = $request->file('fileDocProf')[$i];
-
-
-    $ext = $file->getClientOriginalExtension();
-    $destinationPath = 'uploads/docs';
-    $newFileName = time() . '_' . $name;
-    $path = $destinationPath . '/' . $newFileName.'_prof'.$ext;
-
-    // Move the file to the destination path
-    //$file->move(public_path('uploads/docs'), $path);
-    //
-  //  $file = $request->file('fileDocProf')[0]
-
-
-}
 
 
 
-}
+        }
+       // dd($errors);
+       $containsError = collect($errors)->contains(function ($error) {
+        return !empty($error['errors']);
+    });
 
+    // Convert to JSON response
+    if ($containsError) {
+        return response()->json(['errors' => $errors, 'success' => false], 422);
+    }
 
-//upload the documents information for education
 
 $educationData = [];
 $data =$request->all();
 
-foreach ($data['schoolCountryEduc'] as $key => $value) {
-    $educationData[] = [
-        'document_verifier_country' => $value,
-        'document_category' => $data['docType'][$key],
-        'document_owner_id'=>$doc_owner_id,
-        'matric_number' => $data['matricNumber'][$key],
-        'date_of_issue_educ' => $data['dateOfIssueEduc'][$key],
-        'exam_board' => $data['examBoard'][$key],
-        'document_verifier_name' => $data['schoolNameEduc'][$key],
-        'document_verifier_city' => $data['schoolCity'][$key],
-        'document_status'=>'submitted',
-        'document_ref_code'=> $request->firstName.'/'.substr(md5(uniqid(rand(),true)),0,8),
-        'doc_start_year' => $data['enrollmentYearEduc'][$key],
-        'doc_end_year' => $data['graduationYearEduc'][$key],
-        'doc_info' => $data['addInfo'][$key],
-        'doc_course' => $data['courseOrSubject'][$key],
+//for education file uploads
+$fileKey ='fileDocEduc';
+$type ='educ';
+if ($request->has($fileKey)) {
+    $path_array = [];
+    $index = 0;
+    $response = [];
 
-    ];
+    foreach ($request->$fileKey as $key => $value) {
+        $index++;
+        $file = $request->file($fileKey)[$key];
+        $ext = $file->getClientOriginalExtension();
+        $destinationPath = 'uploads/docs';
+        $newFileName = time() . '_' . $index . '_' . $name;
+        $path = $destinationPath . '/' . $newFileName . "_$type" . '.' . $ext;
+        $file->move(public_path('uploads/docs'), $path);
+        $path_array[] = $path;
+    }
+
+
+
 }
-$docs = document::create($educationData);
-//Education::insert($educationData);
 
 
+$fileKey ='fileDocProf';
+$type ='prof';
+if ($request->has($fileKey)) {
+    $path_prof = [];
+    $index = 0;
+    $response = [];
 
-
-
-
-
-    }else{
-
-      //files were not selected
-        return response()->json(['errors' =>'Select at least one file', 'success'=>false], 422);
-
+    foreach ($request->$fileKey as $key => $value) {
+        $index++;
+        $file = $request->file($fileKey)[$key];
+        $ext = $file->getClientOriginalExtension();
+        $destinationPath = 'uploads/docs';
+        $newFileName = time() . '_' . $index . '_' . $name;
+        $path = $destinationPath . '/' . $newFileName . "_$type" . '.' . $ext;
+        $file->move(public_path('uploads/docs'), $path);
+        $path_prof[] = $path;
     }
 
 
-        // Other processing logic...
+}
+if(count($data['matricNumber'])!=count($data['dateOfIssueEduc'])||count($data['schoolNameEduc'])!= count($data['courseOrSubject'])){
+    return response()->json(['errors' =>'Incomplete fields', 'success' => false], 422);
 
-        return response()->json(['message' => 'Upload successful', 'success'=>true], 201);
+}
+
+$doc_owner_id = $this->saveDocumentOwner($request, $name);
+
+foreach ($data['schoolNameEduc'] as $key => $value) {
+
+
+    $this->save_educational($request, $key, $value, $doc_owner_id, $path);
+
+}
+foreach ($data['schoolNameProf'] as $key => $value) {
+
+
+    $this->save_professional($request, $key, $value, $doc_owner_id, $path);
+
+}
+
+
+
+
+
+
+        return response()->json(['message' => 'Upload successful', 'success' => true], 201);
     }
 
+    private function saveDocumentOwner(Request $request, $name)
+    {
+
+        $document_owner = document_owner::create([
+            'docOwnerFirstName' => strip_tags($request->firstName),
+            'docOwnerMiddleName' => strip_tags($request->middleName),
+            'docOwnerLastName' => strip_tags($request->lastName),
+            'docOwnerDOB' => strip_tags($request->dob),
+            'uploaded_by_user_id'=>Auth::user()->id,
+        ]);
+
+        return $document_owner->id;
+    }
+
+    private function validateDocuments(Request $request,  $fileKey)
+    {
+        if ($request->has($fileKey)) {
+            $response = [];
+            $validator = Validator::make($request->all(), [
+                $fileKey => "required|array",
+                $fileKey.'.*' => "required|mimes:pdf|max:2048",
+
+            ]);
+
+            if ($validator->fails()) {
+                $response['errors'] = $validator->errors()->toArray();
+                return $response;
+            }
 
 
-private function upload_educ($request){
-
-
-    $validator = Validator::make($request->all(), [
-        'firstName' => 'required|string|max:255',
-        'lastName' => 'required|string|max:255',
-        'dob'=>'required|string|',
-        'matricNumber' => 'required|string|',
-        'dateOfIssue'=>'required|array',
-        'schoolName'=>'required|string',
-        'schoolCity'=>'required|string',
-        'schoolCountry'=>'required|numeric|min:1',
-        'enrollmentYear'=>'required|string|',
-        'graduationYear'=>'required|string',
-        'addInfo'=>'required|string',
-        'course'=>'required|string',
-        'docToVerify'=>'required|string',
-    ]);
-
-
-    if ($validator->fails()) {
-
-        return  response()->json(['errors'=>$validator->errors()],422);
-         //give feedback
-     }else{
-
-
-         $validatedData = $validator->validated();
-     $doc_owner=    document_owner::create([
-'docOwnerFirstName'=>strtolower(strip_tags($validatedData['firstName'])),
-'docOwnerMiddleName'=>strtolower(strip_tags($validatedData['middleName'])),
-'docOwnerLastName'=>strtolower(strip_tags($validatedData['lastname'])),
-'docOwnerDOB'=>strip_tags($validatedData['dob']),
-'reference'=>$request->firstName.'/'.substr(md5(uniqid(rand(),true)),0,8), ]);
-$docOwnerId = document_owner::latest()->first()->id;
-
-//save the document
-$document = document::create([
-    'document_owner_id'=>$docOwnerId,
-    'document_verifier_name'=>strip_tags($validatedData['schoolName']),
-    'document_verifier_country'=>strip_tags($validatedData['schoolCountry']),
-    'doc_start_year'=>strip_tags($validatedData['enrollmentYear']),
-    'doc_end_year'=>strip_tags($validatedData['graduation']),
-    'document_status'=>'submitted',
-    'document_ref_code'=>$doc_owner['reference'],
-    'doc_matric_number'=>strip_tags($validatedData['matricNumber']),
-    'doc_info'=>strip_tags($validatedData['addInfo']),
-]);
-//save supporting files
-$uploadedFiles = [];
-if (!empty($request->file)) {
-    $uploadedFiles = [];
-
-    for ($i = 0; $i < count($request['file-name']); $i++) {
-        $name = $request['file-name'][$i];
-        $file = $request->file('document');
-        $ext = $file[$i]->getClientOriginalExtension();
-
-        // Validate file type
-        if ($ext !== 'pdf') {
-            // If the file is not a PDF, return a JSON response
-            return response()->json(['error' => 'Only PDF files are allowed.'], 400);
         }
 
-        // Use Laravel's file handling
-        $destinationPath = 'uploads/docs'; // Set your desired storage path
-        $newFileName = time() . '_' . $name; // You can customize the new filename as needed
-        $path = $destinationPath . '/' . $newFileName . '.' . $ext;
-
-        // Move the file to the destination path
-        $file[$i]->move(public_path('uploads/docs'), $path);
-
-        // Save information about the uploaded file
-        $uploadedFiles[] = [
-            'name' => $name,
-            'file' => $newFileName,
-            'path' => $path,
-            'size' => $_FILES['document']['size'][$i],
-            'type' => $_FILES['document']['type'][$i],
-        ];
+        return true;
     }
 
-    // Process the uploaded files as needed
 
-    // Return a success response if needed
-    return response()->json(['message' => 'Files uploaded successfully.'], 200);
-}
 
-}
-     }
+    private function save_educational(Request $request, $key, $value, $doc_owner_id, $path)
 
-     private function runner(){
-        echo 'we are here';
-     }
+    {
+       $data = $request->all();
+       EducationalDocuments::create([
+        'course'=>strip_tags($data['courseOrSubject'][$key]),
+        'doc_verifier_country' =>strip_tags( $data['schoolCountryEduc'][$key]),
+        'document_category' => 'educational',
+        'country_code'=>strip_tags($data['schoolCountryEduc'][$key]),
+        'doc_owner_id'=>strip_tags($doc_owner_id),
+        'studentId' => strip_tags($data['matricNumber'][$key]),
+        'date_of_issue' => $data['dateOfIssueEduc'][$key],
+        'exam_board' =>strip_tags($data['examBoard'][$key]),
+        'verifier_name' => strip_tags($value),
+        'verifier_id'=>null,
+        'viewer_code'=>null,
+        'verifier_city' => strip_tag($data['schoolCity'][$key]),
+        'status'=>'submitted',
+        'ref_id'=> strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
+        'start_year' =>strip_tags($data['enrollmentYearEduc'][$key]),
+        'end_year' => strip_tags($data['graduationYearEduc'][$key]),
+        'doc_info' => strip_tags($data['addInfo'][$key]),
+        'course' =>strip_tags($data['courseOrSubject'][$key]),
+        'doc_path'=>$path,
+        'created_at' => now(),
+        'updated_at' => now(),
+
+    ],);
+    }
+
+    private function save_professional(Request $request, $key, $value, $doc_owner_id, $path){
+        $data = $request->all();
+
+        ProfessionalDocuments::create([
+            'document_category' => 'professional',
+            'country_code'=>strip_tags($data['schoolCountryProf'][$key]),
+            'doc_owner_id'=>$doc_owner_id,
+            'studentId' =>strip_tags($data['studentIdProf'][$key]),
+            'doc_verifier_name' => $value,
+            'doc_verifier_id'=>null,
+            'viewer_code'=>null,
+            'enrollment_status' =>strip_tags($data['enrolmentStatusProf'][$key]),
+            'qualification'=>strip_tags($data['qualificationProf'][$key]),
+            'status'=>'submitted',
+            'ref_id'=> strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
+            'start_year' => strip_tags($data['enrollmentYearProf'][$key]),
+            'end_year' => strip_tags($data['graduationYearProf'][$key]),
+            'add_info' => strip_tags($data['addInfoProf'][$key]),
+            'course' => strip_tags($data['profCourse'][$key]),
+            'doc_path'=>$path,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+    }
+
 }

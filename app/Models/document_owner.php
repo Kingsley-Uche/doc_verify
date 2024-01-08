@@ -14,7 +14,7 @@ class document_owner extends Model
         'docOwnerMiddleName',
         'docOwnerLastName',
         'docOwnerDOB',
-        'reference',
+        'uploaded_by_user_id',
     ];
 
 }

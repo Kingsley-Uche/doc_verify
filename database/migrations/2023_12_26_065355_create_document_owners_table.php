@@ -11,7 +11,6 @@ return new class extends Migration
      * This table contains the information about the owners of the document to be verified
      * docOwnerFirstName,docOwnerMiddleName and docOwnerLastName refers the firstname, middle name and lastname of the document owner
      * docOwnerDob refers to the date of birth of the document owner
-     * refrence refers to the code to track it within an organization's documents
      *
      * @return void
      */
@@ -23,7 +22,7 @@ return new class extends Migration
             $table->string('docOwnerMiddleName')->nullable();
             $table->string('docOwnerLastName');
             $table->string('docOwnerDOB');
-            $table->longText('reference');
+            $table->string('uploaded_by_user_id');
             $table->timestamps();
         });
     }

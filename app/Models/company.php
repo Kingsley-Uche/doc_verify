@@ -16,7 +16,7 @@ class company extends Model
         'company_country_id',
         'company_created_by_user_id'
     ];
-
+protected $hidden = ['id'];
 
     public function users()
     {
