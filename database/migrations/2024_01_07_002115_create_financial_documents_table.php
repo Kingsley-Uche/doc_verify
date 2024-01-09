@@ -17,6 +17,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('doc_owner_id');
             $table->string('bank_name');
+            $table->longText('description')->nullable();
             $table->string('country_code');
             $table->longText('doc_path');
             $table->longText('ref_id');

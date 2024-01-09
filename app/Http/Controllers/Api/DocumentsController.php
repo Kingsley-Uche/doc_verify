@@ -38,20 +38,38 @@ class DocumentsController extends Controller
         $response_educ = $this->validateDocuments($request, 'fileDocEduc');
         $response_prof = $this->validateDocuments($request,'fileDocProf');
         $response_fin = $this->validateDocuments($request, 'fileDocFin');
+        $errors = [];
 
-        if (
-            (is_array($response_educ) && array_key_exists('errors', $response_educ)) ||
-            (is_array($response_prof) && array_key_exists('errors', $response_prof)) ||
-            (is_array($response_fin) && array_key_exists('errors', $response_fin))
-        ) {
-            return response()->json(['errors' => 'Only pdf files allowed', 'success' => false], 422);
+        if (is_array($response_educ) && array_key_exists('errors', $response_educ) && !empty($response_educ['errors'])) {
+            $errors = array_merge($errors, $response_educ['errors']);
+        }
+
+        if (is_array($response_prof) && array_key_exists('errors', $response_prof) && !empty($response_prof['errors'])) {
+            $errors = array_merge($errors, $response_prof['errors']);
+        }
+
+        if (is_array($response_fin) && array_key_exists('errors', $response_fin) && !empty($response_fin['errors'])) {
+            $errors = array_merge($errors, $response_fin['errors']);
+        }
+
+        if (!empty($errors)) {
+
+
+            return response()->json(['errors' => true, 'message' => $errors, 'success' => false], 422);
         }
 
 
 
         //validate documents
         $errors =[];
+        $data = $request->all();
         if($request->schoolNameEduc||$request->matricNumber||$request->enrollmentYearEduc||$request->schoolCountryEduc||$request->graduationYearEduc){
+
+            if(count($data['matricNumber'])!=count($data['dateOfIssueEduc'])||count($data['schoolNameEduc'])!= count($data['courseOrSubject'])){
+                return response()->json(['errors' =>'Incomplete fields', 'success' => false], 422);
+
+            }
+
             $validator = Validator::make($request->all(), [
                                 'schoolNameEduc' => 'required|array',
                                 'schoolNameEduc.*' => 'required|string',
@@ -91,6 +109,10 @@ class DocumentsController extends Controller
 
         if($request->schoolNameProf||$request->studentIdProf||$request->enrollmentYearProf||$request->schoolCountryProf||$request->graduationYearProf){
 
+            if(count($data['schoolNameProf'])!=count($data['studentIdProf'])||count($data['schoolNameProf'])!= count($data['schoolCountryProf'])){
+                return response()->json(['errors' =>'Incomplete fields', 'success' => false], 422);
+
+            }
 
 
             $validator = Validator::make($request->all(), [
@@ -126,9 +148,23 @@ class DocumentsController extends Controller
         }
 
 
-        if($request->bank_name){
+        if($request->finName||$request->finCountry||$request->finFile){
 
 
+            if(count($data['finName'])!=count($data['finCountry'])||count($data['finName'])!= count($data['fileDocFin'])){
+                return response()->json(['errors' =>'Incomplete fields', 'success' => false], 422);
+
+            }
+            $validator = Validator::make($request->all(), [
+                'finName' => 'required|array',
+                'finName.*' => 'required|string',
+                'finCountry' => 'required|array',
+                'finCountry.*' => 'required|string',]);
+            if ($validator->fails()) {
+                $err=$validator->errors()->toArray();
+                $errors[] =$err;
+
+            }
 
 
         }
@@ -141,6 +177,7 @@ class DocumentsController extends Controller
     if ($containsError) {
         return response()->json(['errors' => $errors, 'success' => false], 422);
     }
+
 
 
 $educationData = [];
@@ -168,7 +205,7 @@ if ($request->has($fileKey)) {
 
 
 }
-
+//for professional file uploads
 
 $fileKey ='fileDocProf';
 $type ='prof';
@@ -190,25 +227,55 @@ if ($request->has($fileKey)) {
 
 
 }
-if(count($data['matricNumber'])!=count($data['dateOfIssueEduc'])||count($data['schoolNameEduc'])!= count($data['courseOrSubject'])){
-    return response()->json(['errors' =>'Incomplete fields', 'success' => false], 422);
+
+
+$fileKey ='fileDocFin';
+$type ='finance';
+if ($request->has($fileKey)) {
+    $path_fin = [];
+    $index = 0;
+    $response = [];
+
+    foreach ($request->$fileKey as $key => $value) {
+        $index++;
+        $file = $request->file($fileKey)[$key];
+        $ext = $file->getClientOriginalExtension();
+        $destinationPath = 'uploads/docs';
+        $newFileName = time() .'_' . $name .'_' .$index ;
+        $path = $destinationPath . '/' . $newFileName . "_$type" . '.' . $ext;
+        $file->move(public_path('uploads/docs'), $path);
+        $path_prof[] = $path;
+    }
+
 
 }
+
 
 $doc_owner_id = $this->saveDocumentOwner($request, $name);
 
-foreach ($data['schoolNameEduc'] as $key => $value) {
+if(isset($data['schoolNameEduc'] )){
+    foreach ($data['schoolNameEduc'] as $key => $value) {
 
 
-    $this->save_educational($request, $key, $value, $doc_owner_id, $path);
+        $this->save_educational($request, $key, $value, $doc_owner_id, $path);
 
-}
-foreach ($data['schoolNameProf'] as $key => $value) {
-
-
-    $this->save_professional($request, $key, $value, $doc_owner_id, $path);
+    }
 
 }
+if(isset($data['schoolNameProf'])){
+    foreach ($data['schoolNameProf'] as $key => $value) {
+
+
+        $this->save_professional($request, $key, $value, $doc_owner_id, $path);
+
+    }
+
+
+}
+if(isset($data['finName'])){
+    $this ->save_finance($request,$key, $value,$doc_owner_id,$path);
+}
+
 
 
 
@@ -243,6 +310,7 @@ foreach ($data['schoolNameProf'] as $key => $value) {
             ]);
 
             if ($validator->fails()) {
+
                 $response['errors'] = $validator->errors()->toArray();
                 return $response;
             }
@@ -271,7 +339,7 @@ foreach ($data['schoolNameProf'] as $key => $value) {
         'verifier_name' => strip_tags($value),
         'verifier_id'=>null,
         'viewer_code'=>null,
-        'verifier_city' => strip_tag($data['schoolCity'][$key]),
+        'verifier_city' => strip_tags($data['schoolCity'][$key]),
         'status'=>'submitted',
         'ref_id'=> strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
         'start_year' =>strip_tags($data['enrollmentYearEduc'][$key]),
@@ -311,4 +379,21 @@ foreach ($data['schoolNameProf'] as $key => $value) {
 
     }
 
+    private function save_finance(Request $request, $key, $value, $doc_owner_id, $path){
+
+        $data = $request->all();
+
+        FinancialDocuments::create([
+            'doc_owner_id'=>$doc_owner_id,
+            'bank_name'=>strip_tags($data['finName'][$key]),
+            'country_code'=>strip_tags($data['finCountry'][$key]),
+            'description'=>strip_tags($data['finInfo'][$key]),
+            'doc_path'=>$path,
+            'ref_id'=>strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
+            'status'=>'submitted',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+    }
 }

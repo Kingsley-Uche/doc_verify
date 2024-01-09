@@ -9,11 +9,16 @@ class FinancialDocuments extends Model
 {
     use HasFactory;
     protected $fillable =[
+        'doc_owner_id',
         'bank_name',
         'country_code',
+        'description',
         'doc_path',
         'ref_id',
-        'status'
+        'status',
+        'viewer_code',
+        'ref_id',
+
 
     ];
 }

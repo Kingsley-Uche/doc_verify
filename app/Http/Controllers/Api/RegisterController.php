@@ -236,6 +236,8 @@ $validator = Validator::make($request->all(), [
 if ($validator->fails()) {
 
 
+
+
     return  response()->json(['errors'=>$validator->errors()],422);
 
 
@@ -247,7 +249,7 @@ if ($validator->fails()) {
 $otp_status =$otp->validate($request->email, $request->otp);
 
 if(!$otp_status->status){
-  return response()->json(['error'=>$otp, 'message'=>'Invalid otp'], 401);
+  return response()->json(['error'=>'invalid otp', 'message'=>'Invalid otp'], 401);
 }
 
 $user =User::where('email',$request->email)->first();
@@ -258,8 +260,10 @@ if ($user) {
 
     User::where('email', $request->email)->update(['email_verified_at' =>now()]);
     $success['success']=true;
-    $code =200;
+    $success['message']='Your email has been verified';
+    $code =201;
     $message='Your email has been verified. You can login.';
+    return response()->json([$success], $code);
 } else {
     // Handle the case when the user is not found
     $success['success']=false;
