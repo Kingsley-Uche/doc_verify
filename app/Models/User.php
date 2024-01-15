@@ -21,6 +21,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
 //Category_id is the same as company_id
 
+
     protected $fillable = [
         'firstName',
         'lastName',
@@ -43,6 +44,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'email_verified_at',
     ];
 
     /**

@@ -6,17 +6,10 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Otp;
 
-class EmailVerificationNotification extends Notification
+class AdminEmailVerification extends Notification
 {
     use Queueable;
-
-    public $message;
-    public $subject;
-    public $fromEmail;
-    public $mailer;
-    public $otp;
 
     /**
      * Create a new notification instance.
@@ -26,12 +19,6 @@ class EmailVerificationNotification extends Notification
     public function __construct()
     {
         //
-        $this->message = 'Use the verification code to confirm your email';
-        $this->subject='Verification needed';
-        $this->fromEmail=env('MAIL_FROM_NAME');
-        $this->mailer= env('mailer');
-        $this->otp = new Otp;
-
     }
 
     /**
@@ -51,19 +38,29 @@ class EmailVerificationNotification extends Notification
      * @param  mixed  $notifiable
      * @return \Illuminate\Notifications\Messages\MailMessage
      */
+    // public function toMail($notifiable)
+    // {
+    //     dd($notifiable);
+    //     return (new MailMessage)
+    //     ->subject('Admin Email Verification')
+    //     ->greeting('Hello! Administrator')
+    //     ->line('Please click the button below to verify your email address.')
+    //     ->action('Notification Action', url('/verify/email'))
+    //     ->line('If you did not create an account, no further action is required.');
+    // }
     public function toMail($notifiable)
-    {
-        $otp =$this->otp->generate($notifiable->email,6,5);
-        return (new MailMessage)
-            ->mailer(env('MAIL_MAILER'))
-            ->subject($this->subject)
-            ->greeting('Hello,'.$notifiable->first_name)
-            ->line($this->message)
-            ->line('code :'.$otp->token);
-                    // ->line('The introduction to the notification.')
-                    // ->action('Notification Action', url('/'))
-                    // ->line('Thank you for using our application!');
-    }
+{
+    return (new MailMessage)
+        ->subject('Admin Email Verification')
+        ->greeting('Hello! Administrator')
+        ->line('Please click the button below to verify your email address.')
+        ->action('Notification Action', route('verification.verify', [
+            'id' => $notifiable->getKey(),
+            'hash' => sha1($notifiable->getEmailForVerification()),
+        ]))
+        ->line('If you did not create an account, no further action is required.');
+}
+
 
     /**
      * Get the array representation of the notification.

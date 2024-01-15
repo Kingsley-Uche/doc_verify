@@ -183,11 +183,11 @@ $user->update(['category_id'=>$category_id]);
 
             $user =user::create(
                 [
-                    'firstName'=>strip_tags($request->input('firstName')),
-                    'lastName'=>strip_tags($request->input('lastName')),
-                    'phone'=>strip_tags ($request->input('phone')),
-                    'email'=>strip_tags($request->input('email')),
-                    'password'=> Hash::make(strip_tags($request->input('password'))),
+                    'firstName'=>strip_tags(strtolower($request->input('firstName'))),
+                    'lastName'=>strip_tags(strtolower($request->input('lastName'))),
+                    'phone'=>strip_tags (strtolower($request->input('phone'))),
+                    'email'=>strip_tags(strtolower($request->input('email'))),
+                    'password'=> Hash::make(strip_tags(strtolower($request->input('password')))),
                 ],
                 );
                 $user_id = user::latest()->first()->id;
@@ -231,7 +231,8 @@ public function validateOtp(request $request){
 $otp =new otp;
 
 $validator = Validator::make($request->all(), [
-    'email' => 'required|email|'],
+    'email' => 'required|email|',
+    'otp'=>'required|string|min:6',]
 );
 if ($validator->fails()) {
 

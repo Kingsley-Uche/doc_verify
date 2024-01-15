@@ -42,7 +42,6 @@ class AuthController extends Controller
 
             // Check if the user's email is verified
             $user  =  user::join('category_users', 'users.category_id','=','category_users.id')
-                            ///->join('companies', 'users.user_company_id', '=', 'companies.company_created_by_user_id')
                             ->select('users.*', 'category_name as category',)
                            -> where('email', $credentials['email'])->first();
 

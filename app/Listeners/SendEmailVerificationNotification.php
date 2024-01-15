@@ -27,6 +27,7 @@ class SendEmailVerificationNotification
     public function handle(Registered $event)
     {
         //
+
         $event->user->SendEmailVerificationNotification();
     }
 }

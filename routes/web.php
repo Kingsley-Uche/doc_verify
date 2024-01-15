@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +17,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/verify/email/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $data =$request->fulfill();
+    dd($data);
+    echo 'verified!';
+
+    return redirect('/home');
+})->middleware(['auth', 'signed'])->name('verification.verify');
