@@ -11,6 +11,7 @@ class ApiAuthenticate
     public function handle(Request $request, Closure $next)
     {
         if (!Auth::check()) {
+            dd('here');
             return response()->json(['error' => 'Unauthenticated.'], 401);
         }
 

@@ -245,6 +245,8 @@ class SystemAdminController extends Controller
 
             if (Auth::guard('system_admin')->attempt($credentials)) {
                 $user = Auth::guard('system_admin')->user();
+                $user->last_logged_in= now();
+                $user->save();
                 $token = $user->createToken('token-name');
 
                 return response()->json(['token' => $token->plainTextToken, 'user'=>$user]);
@@ -263,7 +265,7 @@ class SystemAdminController extends Controller
 
                 if ($user->is_system_admin) {
                     // The user is a system admin, proceed with the activity
-                  
+
                 } else {
                     // The user is not a system admin, deny the activity
                     return response()->json(['error' => 'Permission denied. User is not a system admin'], 403);

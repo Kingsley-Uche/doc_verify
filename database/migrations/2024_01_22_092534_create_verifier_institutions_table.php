@@ -13,13 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('service_charges', function (Blueprint $table) {
-
+        Schema::create('verifier_institutions', function (Blueprint $table) {
             $table->id();
-            $table->string('doc_cat');
-            $table->string('doc_charge');
-            $table->string('category_user');
-            $table->string('created_admin_id');
+            $table->string('institution_id')->nullable();
+            $table->string('company_id')->nullable();
+            $table->string('verified_admin_id');
+            $table->string('verifier_status');
             $table->timestamps();
         });
     }
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('service_charges');
+        Schema::dropIfExists('verifier_institutions');
     }
 };

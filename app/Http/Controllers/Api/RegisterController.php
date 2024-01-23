@@ -74,7 +74,6 @@ public function register(request $request){
 
     ]);
 
-
     if ($validator->fails()) {
 
        return  response()->json(['errors'=>$validator->errors()],422);
@@ -92,6 +91,7 @@ public function register(request $request){
  $company= company::create([
             'company_name' =>strtolower(strip_tags($validatedData['company_name'])),
             'company_industry' => strtolower(strip_tags($validatedData['industry'])),
+            'company_ref'=>strtolower($validatedData['company_name'].'/'.substr(md5(uniqid(rand(),true)),0,8),),
             'company_country_id' =>strtolower(strip_tags($validatedData['country'])),
         ]);
 

@@ -15,6 +15,13 @@ class DocumentsController extends Controller
 {
     public function upload(Request $request)
     {
+
+
+        //implement filetype educ and filetype financial
+
+        //implement referel link for companies
+        //Therewill be a table that contains the company's id alongside its referal link
+        //When documents are submiited through the company, the referal table is accessed and the company's id is saved as the foreign key of the document viewer_id
         $validator = Validator::make($request->all(), [
             'firstName' => 'required|string',
             'middleName' => 'string',
@@ -92,10 +99,8 @@ class DocumentsController extends Controller
                 'schoolNameEduc.*' => 'required|string',
                 'matricNumber' => 'required|array',
                 'matricNumber.*' => 'required|string',
-                'dateOfIssueEduc' => 'required|array',
-                'dateOfIssueEduc.*' => 'required|date_format:d-m-Y',
-                'examBoard' => 'required|array',
-                'examBoard.*' => 'required|string',
+                'examBoard' => '|array',
+                'examBoard.*' => '|string',
                 'schoolCity' => 'required|array',
                 'schoolCity.*' => 'required|string',
                 'enrollmentYearEduc' => 'required|array',
@@ -243,15 +248,15 @@ class DocumentsController extends Controller
         // Save educational documents
         if($request->schoolNameEduc){
             $data = $request->all();
-            EducationalDocuments::create([
+
+         $status=   EducationalDocuments::create([
              'course'=>strip_tags($data['courseOrSubject'][$key]),
              'doc_verifier_country' =>strip_tags( $data['schoolCountryEduc'][$key]),
              'document_category' => 'educational',
              'country_code'=>strip_tags($data['schoolCountryEduc'][$key]),
              'doc_owner_id'=>strip_tags($docOwnerId),
              'studentId' => strip_tags($data['matricNumber'][$key]),
-             'date_of_issue' => $data['dateOfIssueEduc'][$key],
-             'exam_board' =>strip_tags($data['examBoard'][$key]),
+             'exam_board' => isset($data['examBoard'][$key]) ? strip_tags($data['examBoard'][$key]) : null,
              'verifier_name' => strip_tags($data['schoolNameEduc'][$key]),
              'verifier_id'=>null,
              'viewer_code'=>null,
@@ -269,6 +274,7 @@ class DocumentsController extends Controller
          ],);
 
         }
+        dd($status);
 
     }
 
@@ -354,7 +360,8 @@ public function view_documents(Request $request)
 
 private function get_all_documents($id, $type = null)
 {
-    $user2verify = document_owner::where('uploaded_by_user_id', '=', $id)->paginate(10);
+    $user2verify = document_owner::where('uploaded_by_user_id', '=', $id)->get();
+    //->paginate(10);
 
     $response = [];
 

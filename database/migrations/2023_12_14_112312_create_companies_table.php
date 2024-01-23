@@ -13,6 +13,7 @@ class CreateCompaniesTable extends Migration
             $table->string('company_name');
             $table->string('company_industry');
             $table->string('company_country_id');
+            $table->string('company_ref');
             $table->bigInteger('company_created_by_user_id')->nullable();
             $table->timestamps();
         });

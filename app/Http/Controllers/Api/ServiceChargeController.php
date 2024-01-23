@@ -54,7 +54,7 @@ $i++;
 
 
 
-        return response()->json(['success' =>true,'message'=>'Base charge created successfully'], 201);
+        return response()->json(['success' =>true,'message'=>'Service charge created successfully'], 201);
 
 
     }
@@ -78,6 +78,49 @@ private function save_charge($doc_category,$doc_charge,$category_user){
 
 }
 
+public function edit_charge(request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'docCateg' => 'required|array|max:255',
+        'docCateg.*' => 'required|string|max:255',
+        'baseCharge.*' => 'required|array',
+        'baseCharge.*' => 'required|numeric|between:1,100000.99',
+        'category_user'=>'required|string',//This was put diffrent because there might lower charge for organizations
+    ]);
 
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    } else {
+
+        $i =0;
+        $doc = $request->input('docCateg');
+        $base_charge = $request->input('baseCharge');
+        $category_user = $request->input('category_user');
+        $doc_id = $request->input('id');
+
+        foreach($doc as $doc_cat){
+            $doc_category = strip_tags($doc_cat);
+            $doc_charge = strip_tags($base_charge[$i]);
+            $category_user =strip_tags($category_user);
+            $id =strip_tags($doc_id[$i]);
+            $this->update_charge($doc_category, $doc_charge,$category_user,$id);
+            $i++;
+    }
+    return response()->json(['success' =>true,'message'=>'Service charge updated successfully'], 201);
+
+
+}
+}
+
+private function update_charge($doc_category, $doc_charge,$category_user,$id){
+    $status =serviceCharge::where('id', '=',$id)->update([
+        'doc_cat'=>$doc_category,
+        'doc_charge'=>$doc_charge,
+        'category_user'=>$category_user,
+        'updated_at'=>now(),
+    ]);
+
+
+}
 
 }

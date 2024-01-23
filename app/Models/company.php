@@ -13,6 +13,7 @@ class company extends Model
     protected $fillable= [
         'company_name',
         'company_industry',
+        'company_ref',
         'company_country_id',
         'company_created_by_user_id'
     ];

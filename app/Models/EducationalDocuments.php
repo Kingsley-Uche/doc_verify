@@ -13,7 +13,6 @@ class EducationalDocuments extends Model
         'course',
         'verifier_name',
         'verifier_id',
-        'date_of_issue',
         'verifier_city',
         'country_code',
         'studentId',
