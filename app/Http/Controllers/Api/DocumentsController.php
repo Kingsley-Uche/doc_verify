@@ -274,7 +274,7 @@ class DocumentsController extends Controller
          ],);
 
         }
-        dd($status);
+
 
     }
 
@@ -364,25 +364,32 @@ private function get_all_documents($id, $type = null)
     //->paginate(10);
 
     $response = [];
+    $info =[];
 
     foreach ($user2verify as $user => $value) {
-        $documentSet = [
-            'user' => $value,
-            'educationalDocuments' => $this->getEducationalDocuments($value->id, $type),
-            'professionalDocuments' => $this->getProfessionalDocuments($value->id, $type),
-            'financialDocuments' => $this->getFinancialDocuments($value->id, $type),
-        ];
+         $info['user']=$value;
+        $documentSet['educationalDocuments']= $this->getEducationalDocuments($value->id, $type);
+            $documentSet['professionalDocuments']=$this->getProfessionalDocuments($value->id, $type);
+           $documentSet['financialDocuments'] =$this->getFinancialDocuments($value->id, $type);
 
-        $response[] = $documentSet;
+        // $documentSet = [
+        //     'educationalDocuments' => $this->getEducationalDocuments($value->id, $type),
+        //     'professionalDocuments' => $this->getProfessionalDocuments($value->id, $type),
+        //     'financialDocuments' => $this->getFinancialDocuments($value->id, $type),
+        // ];
+        $info['user']['documents']=$documentSet;
+
+
+        $response[] = $info;
     }
 
-    return collect($response);
+    return $response;
 }
 
 
     private function getEducationalDocuments($docOwnerId, $type =null){
         $educatinal_files =[];
-        if($type!==null){
+        if($type==null){
 
             $educatinal_files =EducationalDocuments::where('doc_owner_id','=', $docOwnerId)->get();
 
@@ -402,7 +409,7 @@ private function get_all_documents($id, $type = null)
 
         $professional_files =[];
 
-        if($type!==null){
+        if($type==null){
 
             $professional_files =ProfessionalDocuments::where('doc_owner_id','=', $docOwnerId)->get();
 
@@ -418,7 +425,7 @@ private function get_all_documents($id, $type = null)
     private function getFinancialDocuments($docOwnerId, $type =null){
 
         $financial_files =[];
-        if($type!==null){
+        if($type==null){
 
             $financial_files =FinancialDocuments::where('doc_owner_id','=', $docOwnerId)->get();
 
