@@ -23,6 +23,7 @@ class ProfessionalDocuments extends Model
         'doc_path',
         'ref_id',
         'status',
+        'uploaded_by_user_id',
 
     ];
 }

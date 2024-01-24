@@ -32,8 +32,9 @@ class DocumentsController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+        $deta = $request->all();
 
-        $name = $request->firstName . '_' . $request->lastName;
+        $name = strip_tags($deta['firstName']) . '_' . $deta['lastName'];
 
         $responseEduc = $this->validateDocuments($request, 'fileDocEduc');
         $responseProf = $this->validateDocuments($request, 'fileDocProf');
@@ -45,7 +46,11 @@ class DocumentsController extends Controller
             if (is_array($$responseKey) && array_key_exists('errors', $$responseKey) && !empty($$responseKey['errors'])) {
                 $errors = array_merge($errors, $$responseKey['errors']);
             }
+
+
+
         }
+
 
         if (!empty($errors)) {
             return response()->json(['errors' => true, 'message' => $errors, 'success' => false], 422);
@@ -118,7 +123,7 @@ class DocumentsController extends Controller
                 $errors['educationalData'] = $validator->errors()->toArray();
             }
         }
-
+unset ($validator);
         return $errors;
     }
 
@@ -159,6 +164,7 @@ class DocumentsController extends Controller
             }
 
         }
+        unset ($validator);
 
         return $errors;
     }
@@ -166,6 +172,7 @@ class DocumentsController extends Controller
 
     private function validateFinancialData(request $request)
     {
+
         $data =$request->all();
         $errors = [];
 
@@ -182,7 +189,10 @@ class DocumentsController extends Controller
                 $errors['financialData'] = $validator->errors()->toArray();
 
             }
+            unset ($validator);
+
         }
+
 
         return $errors;
 
@@ -207,7 +217,11 @@ class DocumentsController extends Controller
 
     private function saveDocuments(Request $request, $fileKey, $name, $docOwnerId, $type)
     {
-        if ($request->has($fileKey)) {
+
+
+
+        if ($request->files->has($fileKey)) {
+
             $pathArray = [];
             $index = 0;
 
@@ -221,10 +235,13 @@ class DocumentsController extends Controller
                 $file->move(public_path('uploads/docs'), $path);
                 $pathArray[] = $path;
 
+
                 // Save documents to the respective tables based on $type
             $this->saveDocument($type, $request, $key, $value, $docOwnerId, $path);
             }
+
         }
+
     }
 
     private function saveDocument($type, Request $request, $key, $value, $docOwnerId, $path)
@@ -237,6 +254,7 @@ class DocumentsController extends Controller
                 $this->saveProfessionalDocument($request, $key, $value, $docOwnerId, $path);
                 break;
             case 'finance':
+
                 $this->saveFinancialDocument($request, $key, $value, $docOwnerId, $path);
                 break;
             // Add more cases as needed...
@@ -249,7 +267,7 @@ class DocumentsController extends Controller
         if($request->schoolNameEduc){
             $data = $request->all();
 
-         $status=   EducationalDocuments::create([
+        EducationalDocuments::create([
              'course'=>strip_tags($data['courseOrSubject'][$key]),
              'doc_verifier_country' =>strip_tags( $data['schoolCountryEduc'][$key]),
              'document_category' => 'educational',
@@ -265,23 +283,23 @@ class DocumentsController extends Controller
              'ref_id'=> strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
              'start_year' =>strip_tags($data['enrollmentYearEduc'][$key]),
              'end_year' => strip_tags($data['graduationYearEduc'][$key]),
-             'doc_info' => strip_tags($data['addInfo'][$key]),
+             'doc_info' => isset($data['addInfo'][$key]) ? strip_tags($data['addInfo'][$key]) : null,
              'course' =>strip_tags($data['courseOrSubject'][$key]),
              'doc_path'=>$path,
              'created_at' => now(),
              'updated_at' => now(),
+             'uploaded_by_user_id'=>Auth::user()->id,
 
          ],);
 
         }
-
-
     }
 
     private function saveProfessionalDocument(Request $request, $key, $value, $docOwnerId, $path)
     {
-        if($request->schoolNameProf){
-            $data =$request->all();
+        $data =$request->all();
+        if($request['schoolNameProf']){
+
             // Save professional documents
             ProfessionalDocuments::create([
                 'document_category' => 'professional',
@@ -294,14 +312,15 @@ class DocumentsController extends Controller
                 'enrollment_status' =>strip_tags($data['enrolmentStatusProf'][$key]),
                 'qualification'=>strip_tags($data['qualificationProf'][$key]),
                 'status'=>'submitted',
-                'ref_id'=> strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
+                'ref_id'=> strip_tags($data['firstName']).'/'.substr(md5(uniqid(rand(),true)),0,8),
                 'start_year' => strip_tags($data['enrollmentYearProf'][$key]),
                 'end_year' => strip_tags($data['graduationYearProf'][$key]),
-                'add_info' => strip_tags($data['addInfoProf'][$key])?:null,
+                'add_info' => isset($data['addInfoProf'][$key]) ? strip_tags($data['addInfoProf'][$key]) : null,
                 'course' => strip_tags($data['profCourse'][$key]),
                 'doc_path'=>$path,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'uploaded_by_user_id'=>Auth::user()->id,
             ]);
 
         }
@@ -310,19 +329,23 @@ class DocumentsController extends Controller
 
     private function saveFinancialDocument(Request $request, $key, $value, $docOwnerId, $path)
     {
-if($request->finName){
-    $data = $request->all();
+        $data = $request->all();
+
+if($data['finName']){
+
+
 
     FinancialDocuments::create([
         'doc_owner_id'=>$docOwnerId,
         'bank_name'=>strip_tags($data['finName'][$key]),
         'country_code'=>strip_tags($data['finCountry'][$key]),
-        'description'=>strip_tags($data['finInfo'][$key]),
+        'description'=>isset($data['finInfo'][$key]) ? strip_tags($data['finInfo'][$key]) : null,
         'doc_path'=>$path,
-        'ref_id'=>strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
+        'ref_id'=>strip_tags($data['firstName']).'/'.substr(md5(uniqid(rand(),true)),0,8),
         'status'=>'submitted',
         'created_at' => now(),
         'updated_at' => now(),
+        'uploaded_by_user_id'=>Auth::user()->id,
     ]);
 
 }
@@ -363,78 +386,124 @@ private function get_all_documents($id, $type = null)
     $user2verify = document_owner::where('uploaded_by_user_id', '=', $id)->get();
     //->paginate(10);
 
+
     $response = [];
     $info =[];
 
+
     foreach ($user2verify as $user => $value) {
-         $info['user']=$value;
-        $documentSet['educationalDocuments']= $this->getEducationalDocuments($value->id, $type);
+        //var_dump($value->id);
+
+
+         $documentSet['educationalDocuments']= $this->getEducationalDocuments($value->id, $type);
             $documentSet['professionalDocuments']=$this->getProfessionalDocuments($value->id, $type);
-           $documentSet['financialDocuments'] =$this->getFinancialDocuments($value->id, $type);
+        $documentSet['financialDocuments'] =$this->getFinancialDocuments($value->id, $type);
 
-        // $documentSet = [
-        //     'educationalDocuments' => $this->getEducationalDocuments($value->id, $type),
-        //     'professionalDocuments' => $this->getProfessionalDocuments($value->id, $type),
-        //     'financialDocuments' => $this->getFinancialDocuments($value->id, $type),
-        // ];
-        $info['user']['documents']=$documentSet;
+     $info['user']['documents']=$documentSet;
+     $info['user']['info']=$value;
 
 
-        $response[] = $info;
+     $response[] = $info;
     }
 
+    unset($documentSet);
     return $response;
 }
 
 
     private function getEducationalDocuments($docOwnerId, $type =null){
-        $educatinal_files =[];
-        if($type==null){
+        $user_logged_in_id = Auth::user()->id;
 
-            $educatinal_files =EducationalDocuments::where('doc_owner_id','=', $docOwnerId)->get();
-
-        }elseif(!empty($type)){
-            $educatinal_files =EducationalDocuments::where('doc_owner_id','=', $docOwnerId)
-                                                                                ->where('status', '=', $type)
-                                                                                 ->get();
-
-
-
+$query = EducationalDocuments::where('doc_owner_id', $docOwnerId)
+    ->where(function ($query) use ($type, $user_logged_in_id) {
+        if (!is_null($type)) {
+            $query->where('status', $type);
         }
 
-        return $educatinal_files;
+        $query->orWhere('uploaded_by_user_id', $user_logged_in_id);
+    });
+
+$educational_files = $query->get();
+
+return $educational_files;
+
+
+
     }
 
     private function getProfessionalDocuments($docOwnerId, $type=null){
 
-        $professional_files =[];
+        $user_logged_in_id = Auth::user()->id;
 
-        if($type==null){
+        $query = ProfessionalDocuments::where('doc_owner_id', $docOwnerId)
+            ->where(function ($query) use ($type, $user_logged_in_id) {
+                if (!is_null($type)) {
+                    $query->where('status', $type);
+                }
 
-            $professional_files =ProfessionalDocuments::where('doc_owner_id','=', $docOwnerId)->get();
+                $query->orWhere('uploaded_by_user_id', $user_logged_in_id);
+            });
 
-        }elseif(!empty($type)){
-            $professional_files =ProfessionalDocuments::where('doc_owner_id','=', $docOwnerId)
-                                                                                ->where('status', '=', $type)
-                                                                                 ->get();
+            $professional_files = $query->get();
+
+            return $professional_files;
 
 
-        }
-        return $professional_files;
     }
     private function getFinancialDocuments($docOwnerId, $type =null){
 
-        $financial_files =[];
-        if($type==null){
+        $user_logged_in_id = Auth::user()->id;
 
-            $financial_files =FinancialDocuments::where('doc_owner_id','=', $docOwnerId)->get();
 
-        }elseif(!empty($type)){
-            $financial_files =FinancialDocuments::where('doc_owner_id','=', $docOwnerId)
-                                                                                ->where('status', '=', $type)
-                                                                                 ->get(); }
-            return $financial_files;
+        $query = FinancialDocuments::where('doc_owner_id', $docOwnerId)
+        ->where(function ($query) use ($type, $user_logged_in_id) {
+            if (!is_null($type)) {
+                $query->where('status', $type);
+            }
+
+            $query->orWhere('uploaded_by_user_id', $user_logged_in_id);
+        });
+
+        $financial_files = $query->get();
+
+        return $financial_files;
+;
+
+
     }
+
+    public function get_by_doc_owner_id(request $request){
+$type =null;
+
+        $validator = Validator::make($request->all(), [
+            'docOwnerId' => 'required|string',
+
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $doc_owner_id = strip_tags($request->docOwnerId);
+
+
+
+
+        $documentSet['educationalDocuments']= $this->getEducationalDocuments($doc_owner_id, $type);
+        $documentSet['professionalDocuments']=$this->getProfessionalDocuments($doc_owner_id, $type);
+    $documentSet['financialDocuments'] =$this->getFinancialDocuments($doc_owner_id, $type);
+
+ $info['user']['documents']=$documentSet;
+ $info['user']['info']=document_owner::where('id', '=', $doc_owner_id)->get();
+
+
+ $response[] = $info;
+
+return $response;
+
+    }
+
+
 
 }
 

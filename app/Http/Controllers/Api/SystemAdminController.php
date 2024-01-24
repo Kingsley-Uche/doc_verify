@@ -58,8 +58,8 @@ class SystemAdminController extends Controller
             $success['success']=true;
             $systemAdmin->notify(new EmailVerificationNotification);
 
-            return response()->json($success,201);
 
+unset($systemAdmin);
             return response()->json([$success, ], 201);
         }
     }

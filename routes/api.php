@@ -68,17 +68,40 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
     Route::post('/get/documents', [DocumentsController::class,'view_documents'])->name('get.documents');
     Route::post('/doc/checkout',[PaymentController::class,'checkout'])->name('doc.checkout');
     Route::get('/institutions/all',[Institutions::class,'getAllInstitution'])->name('institutions.all');
+    Route::post('get/by/docOwnerId',[DocumentsController::class,'get_by_doc_owner_id'])->name('get.docByOwnerId');
 
 
     // Add more protected routes as needed
-    Route::post('/base/charge/create', [ServiceChargeController::class, 'createServiceCharge'])
+    //These are only accessible to the system admin
+    Route::post('system/admin/base/charge/create', [ServiceChargeController::class, 'createServiceCharge'])
     ->name('base.charge');
+    //Create service Charge
 
-    Route::post('/verify/institute', [VerifierController::class, 'getOrgByCountry'])
-    ->name('base.institute');
-   // Route::get('/verifier/by/country',[])
+    Route::post('system/admin/get/org/by/country', [VerifierController::class, 'getOrgByCountry'])
+    ->name('country.company');
+    //get an organization by country
+
+    Route::post('system/admin/get/inst/by/country', [VerifierController::class, 'getInstByCountry'])
+    ->name('country.institute');
+    //
+    Route::post('system/admin/get/all/companies', [VerifierController::class, 'get_all_companies'])
+    ->name('companies.all');
+
+    Route::post('system/admin/get/all/inst', [VerifierController::class, 'get_all_institutions'])
+    ->name('institutes.all');
+    Route::post('system/admin/verify/institute', [VerifierController::class, 'verify_institute'])
+    ->name('verify.institute');
+    Route::get('system/admin/view/verified/institution', [VerifierController::class, 'view_verified_institution'])
+    ->name('verified.institutes');
+
+    Route::get('system/admin/get/all/documents', [VerifierController::class, 'get_all_documents'])
+    ->name('view.documents');
+    Route::get('system/admin/verify/document', [VerifierController::class, 'verify_document'])
+    ->name('verify.document');
 
 });
+
+
 
 Route::group(['middleware' => [SystemManagerMiddleware::class]], function () {
 

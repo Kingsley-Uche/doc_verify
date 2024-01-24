@@ -27,9 +27,11 @@ return new class extends Migration
             $table->string('end_year');
             $table->longText('add_info')->nullable();
             $table->longText('doc_path');
+            $table->string('uploaded_by_id');
             $table->longText('ref_id');
             $table->string('status');
             $table->longText('viewer_code')->nullable();
+
 
             $table->timestamps();
         });

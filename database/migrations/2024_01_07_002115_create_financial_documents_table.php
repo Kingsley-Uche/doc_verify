@@ -22,6 +22,7 @@ return new class extends Migration
             $table->longText('doc_path');
             $table->longText('ref_id');
             $table->longText('viewer_code')->nullable();
+            $table->string('uploaded_by_id');
             $table->string('status');
             $table->timestamps();
         });
