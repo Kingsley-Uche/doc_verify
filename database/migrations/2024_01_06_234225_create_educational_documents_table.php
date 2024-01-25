@@ -30,7 +30,7 @@ return new class extends Migration
             $table->longText('ref_id');
             $table->longText('doc_info');
             $table->string('status');
-            $table->string('uploaded_by_id');
+            $table->string('uploaded_by_user_id');
             $table->longText('viewer_code')->nullable();
             $table->timestamps();
         });
