@@ -24,22 +24,21 @@ if(isset($data['schoolNameEduc'])){
 
     $number_educ = count($data['schoolNameEduc']);
     $educ_service_charge = $this->get_educational_charge($user_category);
-    //$total_educ_servic_charge['total'] = floatval($educ_service_charge*$number_educ);
     $info['educational']['number_docs'] = $number_educ;
     $info['educational']['charge_per_one'] = $educ_service_charge;
     $info['educational']['charge_total']= floatval($educ_service_charge*$number_educ);
 
 
-
+$i =0;
     foreach($data['schoolNameEduc'] as $school){
 
         $surcharge['surcharge'] = $this->get_surcharge($school);
         $surcharge['inst']= $school;
 
-        $surcharge_all= $surcharge;
+        $surcharge_all[$i]= $surcharge;
         $total['total']= floatval($info['educational']['charge_total'] +$surcharge['surcharge']);
 
-
+$i++;
     }
      array_push($total,$surcharge_all, $info);
 
@@ -57,7 +56,7 @@ if(isset($data['schoolNameProf'])){
 
 
 
-    if($professional_service_cost->isNotEmpty()){
+    if($professional_service_cost!==null && $professional_service_cost->isNotEmpty()){
        $charge = $professional_service_cost->first()->doc_charge;
     }else{
         $charge =0;
@@ -93,7 +92,7 @@ if(isset($data['schoolNameProf'])){
 
 
 
-        if ($financial_service_cost->isNotEmpty()) {
+        if ($financial_service_cost!==null && $financial_service_cost->isNotEmpty()) {
 
             $charge = $financial_service_cost->first()->doc_charge;
         } else {
@@ -124,8 +123,15 @@ if(isset($data['schoolNameProf'])){
 
         }
         unset($info);
+        $payment['total_amount']= $total['total'];
+        $payment['email']= $user->email;
+        $payment['firstName']=$user->firstName;
+        $payment['lastName']=$user->lastName;
+        $total['payment_details'] =$payment;
+        unset($total['total']);
+        unset($data);
 
-          return response()->json(['success' => true, 'cost'=>$total], 201);
+          return response()->json(['success' => true, 'data'=>$total], 201);
 
     }
 
@@ -168,7 +174,7 @@ return $surcharge;
     private function get_professional_charge($user_category){
         $professional_service_cost =serviceCharge::select('doc_charge')->where('category_user_id','=',$user_category)
         ->where('doc_cat','=','professional')
-        ->get();
+        ->first();
         return $professional_service_cost;
 
 
@@ -180,7 +186,7 @@ return $surcharge;
         $financial_service_cost = serviceCharge::select('doc_charge')
         ->where('category_user_id', '=', $user_category)
         ->where('doc_cat', '=', "financial")
-        ->get();
+        ->first();
 return $financial_service_cost;
 
     }
