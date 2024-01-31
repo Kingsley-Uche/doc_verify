@@ -15,6 +15,7 @@ class document_owner extends Model
         'docOwnerLastName',
         'docOwnerDOB',
         'uploaded_by_user_id',
+        'application_id',
     ];
 
 }

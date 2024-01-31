@@ -18,6 +18,9 @@ return new class extends Migration
             $table->bigInteger('doc_id');
             $table->decimal('amount', 10,2);
             $table->text('description');
+            $table->text('transaction_id')->nullable();//This is the same as the application id in documents, document owner etc table;
+            $table->bigInteger('transaction_user_id');
+            $table->text('status');
             $table->timestamps();
         });
     }

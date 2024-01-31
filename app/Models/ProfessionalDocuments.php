@@ -22,6 +22,7 @@ class ProfessionalDocuments extends Model
         'add_info',
         'doc_path',
         'ref_id',
+        'application_id',
         'status',
         'uploaded_by_user_id',
 

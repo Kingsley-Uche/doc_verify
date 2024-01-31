@@ -29,6 +29,7 @@ return new class extends Migration
             $table->longText('doc_path');
             $table->string('uploaded_by_user_id');
             $table->longText('ref_id');
+            $table->longText('application_id')->nullable();
             $table->string('status');
             $table->longText('viewer_code')->nullable();
 

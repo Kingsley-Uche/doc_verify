@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('country_code');
             $table->longText('doc_path');
             $table->longText('ref_id');
+            $table->longText('application_id')->nullable();
             $table->longText('viewer_code')->nullable();
             $table->string('uploaded_by_user_id');
             $table->string('status');

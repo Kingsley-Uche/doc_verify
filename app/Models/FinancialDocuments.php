@@ -18,6 +18,7 @@ class FinancialDocuments extends Model
         'status',
         'viewer_code',
         'ref_id',
+        'application_id',
         'uploaded_by_user_id',
 
 

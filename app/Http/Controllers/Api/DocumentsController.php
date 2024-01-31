@@ -8,6 +8,7 @@ use App\Models\FinancialDocuments;
 use App\Http\Controllers\Controller;
 use App\Models\EducationalDocuments;
 use App\Models\ProfessionalDocuments;
+use App\Models\transactions;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -208,8 +209,16 @@ unset ($validator);
             'docOwnerFirstName' => strip_tags($request->firstName),
             'docOwnerMiddleName' => strip_tags($request->middleName),
             'docOwnerLastName' => strip_tags($request->lastName),
+            'application_id'=>strip_tags($request->reference),
             'docOwnerDOB' => strip_tags($request->dob),
             'uploaded_by_user_id' => Auth::user()->id,
+        ]);
+        transactions::where('transaction_id', strip_tags($request->reference))
+        ->update([
+            'doc_id' => $documentOwner->id,
+            'status' => 'confirmed',
+            'updated_at'=>now(),
+            // Add other columns and values to update
         ]);
 
         return $documentOwner->id;

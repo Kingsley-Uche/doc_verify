@@ -23,6 +23,7 @@ class EducationalDocuments extends Model
         'doc_path',
         'doc_info',
         'ref_id',
+        'application_id',
         'exam_board',
         'status',
         'uploaded_by_user_id',

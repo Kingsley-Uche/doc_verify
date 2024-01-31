@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('docOwnerLastName');
             $table->string('docOwnerDOB');
             $table->string('uploaded_by_user_id');
+            $table->longText('application_id')->nullable();
             $table->timestamps();
         });
     }

@@ -6,6 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Institutions;
 use App\Models\ServiceCharge;
 use Illuminate\Support\Facades\Auth;
+use App\Models\transactions;
+
+
+
+/**
+ * The payment processing module handles payment calculation using the uploaded data
+ * Since educational documents can have surcharge, it fetches the surcharge of each school.
+ *
+ */
 
 class PaymentController extends Controller
 {
@@ -102,5 +111,76 @@ class PaymentController extends Controller
         return ServiceCharge::where('category_user_id', $userCategory)
             ->where('doc_cat', 'financial')
             ->value('doc_charge') ?? 0;
+    }public function initiatePayment(Request $request)
+    {
+        $data = $request->all();
+
+        $url = "https://api.paystack.co/transaction/initialize";
+
+        $fields = [
+            'email' => Auth::user()->email,
+            'amount' => $data['amount'] * 100,
+        ];
+
+        $fields_string = http_build_query($fields);
+
+        // open connection
+        $ch = curl_init();
+
+        // set the url, number of POST vars, POST data
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "Authorization: Bearer " . env('PAYMENTBEARER'),
+            "Cache-Control: no-cache",
+        ));
+
+        // So that curl_exec returns the contents of the cURL; rather than echoing it
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        // execute post
+        $result = curl_exec($ch);
+
+        // Check for cURL errors
+        if (curl_errno($ch)) {
+            return response()->json(['success' => false, 'error' => curl_error($ch)], 500);
+        }
+
+        // close connection
+        curl_close($ch);
+        $data = json_decode($result);
+
+        //check for data and update on the database
+        if ($data && $data->status) {
+            $authorizationUrl = $data->data->authorization_url;
+            $accessCode = $data->data->access_code;
+            $reference = $data->data->reference;
+            //call create transaction
+
+            transactions::create([
+                'doc_id'=>000,
+                'amount'=>strip_tags($request->amount),
+                'description'=>'Not confirmed',
+                'transaction_id'=>$reference,
+                'status'=>'initiated',
+                'transaction_user_id'=>Auth::user()->id,
+                'created_at'=>now(),
+                'updated_at'=>now(),
+            ]);
+
+
+            return response()->json(['success' => true, 'data' => $result], 200);
+
+        } else {
+            return response()->json(['success' => false, 'message' => 'failed'], 401);
+            // Handle the case where decoding fails or status is false
+            echo "Failed to decode JSON or status is false\n";
+        }
+        die();
+
+
     }
+
+
 }
