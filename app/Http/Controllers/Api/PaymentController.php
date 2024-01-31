@@ -1,193 +1,106 @@
 <?php
-
 namespace App\Http\Controllers\api;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\institutions;
-use App\Models\serviceCharge;
+use App\Models\Institutions;
+use App\Models\ServiceCharge;
 use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
-    //
-    public function checkout(request $request){
+    public function checkout(Request $request)
+    {
+        $user = Auth::user();
+        $total = 0;
+         //Educational
+        if (isset($request->schoolNameEduc)) {
+            $info['educational'] = [
+                'number_docs' => count($request->schoolNameEduc),
+                'documents' => [],
+            ];
 
-$data = $request->all();
-$info =[];
-$user =Auth::user();
-$email = $user->email;
-$user_category = $user->category_id;
-$total =[];
-if(isset($data['schoolNameEduc'])){
-    $surcharge_all =[];
+            foreach ($request->schoolNameEduc as $school) {
+                $educServiceCharge = $this->getEducationalCharge($user->category_id);
+                $surcharge = $this->getSurcharge($school);
 
-    $number_educ = count($data['schoolNameEduc']);
-    $educ_service_charge = $this->get_educational_charge($user_category);
-    $info['educational']['number_docs'] = $number_educ;
-    $info['educational']['charge_per_one'] = $educ_service_charge;
-    $info['educational']['charge_total']= floatval($educ_service_charge*$number_educ);
+                $documentTotal = $educServiceCharge + $surcharge;
 
+                $info['educational']['documents'][] = [
+                    'school' => $school,
+                    'charge_per_one' => $educServiceCharge,
+                    'surcharge' => $surcharge,
+                    'charge_total' => $documentTotal,
+                ];
 
-$i =0;
-    foreach($data['schoolNameEduc'] as $school){
-
-        $surcharge['surcharge'] = $this->get_surcharge($school);
-        $surcharge['inst']= $school;
-
-        $surcharge_all[$i]= $surcharge;
-        $total['total']= floatval($info['educational']['charge_total'] +$surcharge['surcharge']);
-
-$i++;
-    }
-     array_push($total,$surcharge_all, $info);
-
-
-
-
-}
-unset($info);
-
-if(isset($data['schoolNameProf'])){
-
-
-    $professional_service_cost=$this -> get_professional_charge($user_category);
-    $professional_number= count($data['schoolNameProf']);
-
-
-
-    if($professional_service_cost!==null && $professional_service_cost->isNotEmpty()){
-       $charge = $professional_service_cost->first()->doc_charge;
-    }else{
-        $charge =0;
-
-    }
-
-
-    $cost_professional  = floatval($charge)*floatval($professional_number);
-
-    $info['professional']['number_docs'] = $professional_number;
-    $info['professional']['charge_per_one'] = $charge;
-    $info['professional']['charge_total']= $cost_professional;
-    if(isset($total['total'])){
-
-        $total['total'] =   floatval($total['total']+$cost_professional);
-    }
-    array_push($total,$info);
-
-    unset($charge);
-
-
-
-    //   $cost = $this->calculate_cost($request);
-    //   return response()->json(['success' => true, 'cost'=>$cost], 422);
-    }
-
-
-    unset($info);
-
-    if (isset($request['finName'])) {
-        $financial_number = count($request['finName']);
-        $financial_service_cost =$this->get_financial_charge($user_category);
-
-
-
-        if ($financial_service_cost!==null && $financial_service_cost->isNotEmpty()) {
-
-            $charge = $financial_service_cost->first()->doc_charge;
-        } else {
-            // The collection is empty, set charge to 0
-            $charge = 0;
-
+                $total += $documentTotal;
+            }
         }
 
+        // Professional
+        if (isset($request->schoolNameProf)) {
+            $professionalServiceCharge = $this->getProfessionalCharge($user->category_id);
+            $info['professional'] = [
+                'number_docs' => count($request->schoolNameProf),
+                'charge_per_one' => $professionalServiceCharge,
+                'charge_total' => $professionalServiceCharge * count($request->schoolNameProf),
+            ];
 
-
-
-
-
-        $cost_financial = floatval($charge) * floatval($financial_number);
-        $info['financial']['number_docs'] = $financial_number;
-        $info['financial']['charge_per_one'] = $charge;
-        $info['financial']['charge_total']= $cost_financial;
-        if(isset($total['total'])){
-
-            $total['total'] =   floatval($total['total']+$cost_financial);
+            $total += $info['professional']['charge_total'];
         }
-        array_push($total,$info);
 
-        unset($charge);
+        // Financial
+        if (isset($request->finName)) {
+            $financialServiceCharge = $this->getFinancialCharge($user->category_id);
+            $info['financial'] = [
+                'number_docs' => count($request->finName),
+                'charge_per_one' => $financialServiceCharge,
+                'charge_total' => $financialServiceCharge * count($request->finName),
+            ];
 
-
-
-
+            $total += $info['financial']['charge_total'];
         }
-        unset($info);
-        $payment['total_amount']= $total['total'];
-        $payment['email']= $user->email;
-        $payment['firstName']=$user->firstName;
-        $payment['lastName']=$user->lastName;
-        $total['payment_details'] =$payment;
-        unset($total['total']);
-        unset($data);
 
-          return response()->json(['success' => true, 'data'=>$total], 201);
+        $paymentDetails = [
+            'total_amount' => $total,
+            'email' => $user->email,
+            'firstName' => $user->firstName,
+            'lastName' => $user->lastName,
+            'data'=>$info,
+        ];
 
+        return response()->json(['success' => true, 'data' => $paymentDetails], 201);
     }
 
+    // ... (other methods)
 
-
-
-
-
-
-
-
-
-    private function get_educational_charge($user_category){
-
-        $educational_service_cost = ServiceCharge::select('doc_charge')
-        ->where('category_user_id', '=', $user_category)
-        ->where('doc_cat', '=', 'educational')
-        ->first();
-        return $educational_service_cost->doc_charge;
-
-
-
-    }
-    private function get_surcharge($school){
-
-        $institution_sucharge = institutions::select('institutions.id', 'institutions.name', 'institution_charge')
-        ->join('surcharge_models', 'surcharge_models.institution_id', '=', 'institutions.id')
-        ->where('institutions.name', $school)
-        ->first();
-
-    // Check if $institution_sucharge is not null, or you can use the isNotEmpty() method
-    if (!$institution_sucharge) {
-        $surcharge = 0;
-    } else {
-        $surcharge = $institution_sucharge->institution_charge;
-    }
-return $surcharge;
-
-    }
-    private function get_professional_charge($user_category){
-        $professional_service_cost =serviceCharge::select('doc_charge')->where('category_user_id','=',$user_category)
-        ->where('doc_cat','=','professional')
-        ->first();
-        return $professional_service_cost;
-
-
+    private function getEducationalCharge($userCategory)
+    {
+        return ServiceCharge::where('category_user_id', $userCategory)
+            ->where('doc_cat', 'educational')
+            ->value('doc_charge') ?? 0;
     }
 
+    private function getSurcharge($school)
+    {
+        $institutionSurcharge = Institutions::join('surcharge_models', 'surcharge_models.institution_id', '=', 'institutions.id')
+            ->where('institutions.name', $school)
+            ->value('institution_charge');
 
-    private function get_financial_charge($user_category){
+        return $institutionSurcharge ?? 0;
+    }
 
-        $financial_service_cost = serviceCharge::select('doc_charge')
-        ->where('category_user_id', '=', $user_category)
-        ->where('doc_cat', '=', "financial")
-        ->first();
-return $financial_service_cost;
+    private function getProfessionalCharge($userCategory)
+    {
+        return ServiceCharge::where('category_user_id', $userCategory)
+            ->where('doc_cat', 'professional')
+            ->value('doc_charge') ?? 0;
+    }
 
+    private function getFinancialCharge($userCategory)
+    {
+        return ServiceCharge::where('category_user_id', $userCategory)
+            ->where('doc_cat', 'financial')
+            ->value('doc_charge') ?? 0;
     }
 }
