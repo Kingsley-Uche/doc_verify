@@ -1,12 +1,13 @@
 <?php
 namespace App\Http\Controllers\api;
 
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use App\Models\Institutions;
-use App\Models\ServiceCharge;
-use Illuminate\Support\Facades\Auth;
 use App\Models\transactions;
+use Illuminate\Http\Request;
+use App\Models\ServiceCharge;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 
 
@@ -20,6 +21,17 @@ class PaymentController extends Controller
 {
     public function checkout(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'firstName' => 'required|string',
+            'middleName' => 'string',
+            'lastName' => 'required|string',
+            'dob' => 'required|date_format:d-m-Y',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
         $user = Auth::user();
         $total = 0;
          //Educational
@@ -90,6 +102,8 @@ class PaymentController extends Controller
             ->value('doc_charge') ?? 0;
     }
 
+
+
     private function getSurcharge($school)
     {
         $institutionSurcharge = Institutions::join('surcharge_models', 'surcharge_models.institution_id', '=', 'institutions.id')
@@ -99,6 +113,9 @@ class PaymentController extends Controller
         return $institutionSurcharge ?? 0;
     }
 
+
+
+
     private function getProfessionalCharge($userCategory)
     {
         return ServiceCharge::where('category_user_id', $userCategory)
@@ -106,12 +123,18 @@ class PaymentController extends Controller
             ->value('doc_charge') ?? 0;
     }
 
+
+
     private function getFinancialCharge($userCategory)
     {
         return ServiceCharge::where('category_user_id', $userCategory)
             ->where('doc_cat', 'financial')
             ->value('doc_charge') ?? 0;
-    }public function initiatePayment(Request $request)
+    }
+
+
+
+    public function initiatePayment(Request $request)
     {
         $data = $request->all();
 
@@ -175,12 +198,100 @@ class PaymentController extends Controller
         } else {
             return response()->json(['success' => false, 'message' => 'failed'], 401);
             // Handle the case where decoding fails or status is false
-            echo "Failed to decode JSON or status is false\n";
+
         }
-        die();
+
 
 
     }
 
+    public function start_transaction(request $request){
+        // accepts transaction from the backend
+        $data = $request->all();
 
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|integer',
+            'reference' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        $this->save_transaction($request);
+
+    }
+
+
+    private function save_transaction(request $request){
+        //handles transaction creation
+        $data =$request->all();
+
+$reference = strip_tags( $data['reference']);
+
+
+            //call create transaction
+
+            transactions::create([
+                'doc_id'=>000,
+                'amount'=>strip_tags($request->amount),
+                'description'=>'Not confirmed',
+                'transaction_id'=>$reference,
+                'status'=>'initiated',
+                'transaction_user_id'=>Auth::user()->id,
+                'created_at'=>now(),
+                'updated_at'=>now(),
+            ]);
+
+
+            return response()->json(['success' => true, 'message' => 'transaction started.'], 200);
+
+
+
+
+    }
+
+    public function confirm_payment(request $request){
+        $curl = curl_init();
+$reference='hsw1fud4uc';
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => "https://api.paystack.co/transaction/verify/{$reference}",
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => "",
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 30,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => "GET",
+          CURLOPT_HTTPHEADER =>  array(
+            "Authorization: Bearer " . env('PAYMENTBEARER'),
+            "Cache-Control: no-cache",
+          ),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+
+        curl_close($curl);
+
+        if ($err) {
+         // echo "cURL Error #:" . $err;
+
+         return response()->json(['success' => false, 'message' => 'Network error', 'error'=>$err], 422);
+
+        } else {
+
+            transactions::where('transaction_id', strip_tags($reference))
+            ->update([
+                'status' => 'confirmed',
+                'updated_at'=>now(),
+                'description'=>'Payment has been confirmed',
+
+            ]);
+
+
+            return response()->json(['success' => true, 'message' => 'transaction confirmed', 'data'=>$response], 200);
+        }
+        //process payment here.
+
+
+    }
 }

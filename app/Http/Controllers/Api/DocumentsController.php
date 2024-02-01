@@ -8,7 +8,6 @@ use App\Models\FinancialDocuments;
 use App\Http\Controllers\Controller;
 use App\Models\EducationalDocuments;
 use App\Models\ProfessionalDocuments;
-use App\Models\transactions;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -209,16 +208,8 @@ unset ($validator);
             'docOwnerFirstName' => strip_tags($request->firstName),
             'docOwnerMiddleName' => strip_tags($request->middleName),
             'docOwnerLastName' => strip_tags($request->lastName),
-            'application_id'=>strip_tags($request->reference),
             'docOwnerDOB' => strip_tags($request->dob),
             'uploaded_by_user_id' => Auth::user()->id,
-        ]);
-        transactions::where('transaction_id', strip_tags($request->reference))
-        ->update([
-            'doc_id' => $documentOwner->id,
-            'status' => 'confirmed',
-            'updated_at'=>now(),
-            // Add other columns and values to update
         ]);
 
         return $documentOwner->id;
@@ -365,7 +356,6 @@ if($data['finName']){
 
 
 
-
 public function view_documents(Request $request)
 {
     $user_id = auth()->user()->id;
@@ -381,8 +371,6 @@ public function view_documents(Request $request)
         }
 
         $response = $this->get_all_documents($user_id, $request->type);
-
-
     } else {
         $response['data'] = $this->get_all_documents($user_id);
     }
@@ -390,49 +378,57 @@ public function view_documents(Request $request)
     return response()->json(['data' => $response, 'success' => true], 200);
 }
 
-private function get_all_documents($id, $type = null)
+ private function get_all_documents($id, $type = null)
 {
     $user2verify = document_owner::where('uploaded_by_user_id', '=', $id)->get();
-    //->paginate(10);
-
-
     $response = [];
-    $info =[];
 
 
     foreach ($user2verify as $user => $value) {
-        //var_dump($value->id);
+    $documentSet = [
+        'educationalDocuments' => $this->getEducationalDocuments($value->id, $type, $value),
+        'professionalDocuments' => $this->getProfessionalDocuments($value->id, $type, $value),
+        'financialDocuments' => $this->getFinancialDocuments($value->id, $type, $value),
+    ];
+
+    if (
+        count($documentSet['educationalDocuments']) > 0 ||
+        count($documentSet['professionalDocuments']) > 0 ||
+        count($documentSet['financialDocuments']) > 0
+    ) {
 
 
-         $documentSet['educationalDocuments']= $this->getEducationalDocuments($value->id, $type);
-            $documentSet['professionalDocuments']=$this->getProfessionalDocuments($value->id, $type);
-        $documentSet['financialDocuments'] =$this->getFinancialDocuments($value->id, $type);
 
-     $info['user']['documents']=$documentSet;
-     $info['user']['info']=$value;
+        $info['user']['documents'] = $documentSet;
+        $info['user']['info'] = $value;
+        $response[] = $info;
 
+       unset($documentSet);
 
-     $response[] = $info;
     }
 
-    unset($documentSet);
-    return $response;
+}
+ return $response;
+
 }
 
-
-    private function getEducationalDocuments($docOwnerId, $type =null){
+    private function getEducationalDocuments($docOwnerId, $type =null, $value){
         $user_logged_in_id = Auth::user()->id;
 
 $query = EducationalDocuments::where('doc_owner_id', $docOwnerId)
     ->where(function ($query) use ($type, $user_logged_in_id) {
-        if (!is_null($type)) {
+          if (isset($type)||$type!= null) {
             $query->where('status', $type);
         }
+            $query->Where('uploaded_by_user_id', $user_logged_in_id);
 
-        $query->orWhere('uploaded_by_user_id', $user_logged_in_id);
+
+
+
     });
 
 $educational_files = $query->get();
+
 
 return $educational_files;
 
@@ -440,40 +436,48 @@ return $educational_files;
 
     }
 
-    private function getProfessionalDocuments($docOwnerId, $type=null){
+    private function getProfessionalDocuments($docOwnerId, $type=null, $value){
 
         $user_logged_in_id = Auth::user()->id;
 
         $query = ProfessionalDocuments::where('doc_owner_id', $docOwnerId)
             ->where(function ($query) use ($type, $user_logged_in_id) {
-                if (!is_null($type)) {
+                if (isset($type)||$type!= null) {
                     $query->where('status', $type);
                 }
+                  $query->Where('uploaded_by_user_id', $user_logged_in_id);
 
-                $query->orWhere('uploaded_by_user_id', $user_logged_in_id);
+
+
+
             });
 
             $professional_files = $query->get();
+
 
             return $professional_files;
 
 
     }
-    private function getFinancialDocuments($docOwnerId, $type =null){
+    private function getFinancialDocuments($docOwnerId, $type =null, $value){
 
         $user_logged_in_id = Auth::user()->id;
 
 
         $query = FinancialDocuments::where('doc_owner_id', $docOwnerId)
         ->where(function ($query) use ($type, $user_logged_in_id) {
-            if (!is_null($type)) {
+            if (isset($type)||$type!= null) {
                 $query->where('status', $type);
             }
+               $query->Where('uploaded_by_user_id', $user_logged_in_id);
 
-            $query->orWhere('uploaded_by_user_id', $user_logged_in_id);
+
+
+
         });
 
         $financial_files = $query->get();
+
 
         return $financial_files;
 ;
@@ -498,9 +502,9 @@ $type =null;
 
 
 
-        $documentSet['educationalDocuments']= $this->getEducationalDocuments($doc_owner_id, $type);
-        $documentSet['professionalDocuments']=$this->getProfessionalDocuments($doc_owner_id, $type);
-    $documentSet['financialDocuments'] =$this->getFinancialDocuments($doc_owner_id, $type);
+        $documentSet['educationalDocuments']= $this->getEducationalDocuments($doc_owner_id, $type, $value=null);
+        $documentSet['professionalDocuments']=$this->getProfessionalDocuments($doc_owner_id, $type, $value = null);
+    $documentSet['financialDocuments'] =$this->getFinancialDocuments($doc_owner_id, $type, $value= null);
 
  $info['user']['documents']=$documentSet;
  $info['user']['info']=document_owner::where('id', '=', $doc_owner_id)->get();

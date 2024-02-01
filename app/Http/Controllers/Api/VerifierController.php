@@ -142,10 +142,27 @@ class VerifierController extends Controller
 
     }
     public function get_all_documents(request $request){
+        if($request->type){
+            $validator = Validator::make($request->all(), [
+            'type'=> 'required|string',
+
+        ]);
+        $type = strip_tags($request->type);
+
+           if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
 
 
-$type =$request->type;
+
+        }else{
+            $type =null;
+        }
+
+
+
+
 
 
     $user2verify = document_owner::select('id','docOwnerFirstName','docOwnerMiddleName','docOwnerLastName','docOwnerDOB','uploaded_by_user_id')->get();
@@ -156,20 +173,32 @@ $type =$request->type;
     $info =[];
 
 
+
     foreach ($user2verify as $user => $value) {
-        //var_dump($value->id);
+    $documentSet = [
+        'educationalDocuments' => $this->getEducationalDocuments($value->id, $type, $value),
+        'professionalDocuments' => $this->getProfessionalDocuments($value->id, $type, $value),
+        'financialDocuments' => $this->getFinancialDocuments($value->id, $type, $value),
+    ];
+
+    if (
+        count($documentSet['educationalDocuments']) > 0 ||
+        count($documentSet['professionalDocuments']) > 0 ||
+        count($documentSet['financialDocuments']) > 0
+    ) {
 
 
-         $documentSet['educationalDocuments']= $this->getEducationalDocuments($value->id, $type);
-            $documentSet['professionalDocuments']=$this->getProfessionalDocuments($value->id, $type);
-        $documentSet['financialDocuments'] =$this->getFinancialDocuments($value->id, $type);
 
-     $info['user']['documents']=$documentSet;
-     $info['user']['info']=$value;
+        $info['user']['documents'] = $documentSet;
+        $info['user']['info'] = $value;
+        $response[] = $info;
 
+       unset($documentSet);
 
-     $response[] = $info;
     }
+
+}
+ return $response;
 
     return $response;
 }

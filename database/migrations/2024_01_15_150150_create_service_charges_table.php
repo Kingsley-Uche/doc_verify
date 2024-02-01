@@ -18,7 +18,7 @@ return new class extends Migration
             $table->id();
             $table->string('doc_cat');
             $table->string('doc_charge');
-            $table->string('category_user');
+            $table->string('category_user_id');
             $table->string('created_admin_id');
             $table->timestamps();
         });

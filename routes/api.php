@@ -71,6 +71,7 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
 
     Route::get('/institutions/all',[Institutions::class,'getAllInstitution'])->name('institutions.all');
     Route::post('get/by/docOwnerId',[DocumentsController::class,'get_by_doc_owner_id'])->name('get.docByOwnerId');
+    Route::post('/confirm/transaction',[PaymentController::class,'confirm_payment'])->name('payment.confirm');
 
 
 
