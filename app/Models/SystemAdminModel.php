@@ -19,7 +19,7 @@ class SystemAdminModel extends Authenticatable
 
     protected $guarded = 'system_admin';
     protected $table = 'system_admin';
-    protected $fillable = ['firstName', 'lastName', 'email', 'phone', 'is_system_admin','last_logged_in', 'password', 'email_verified_at'];
+    protected $fillable = ['firstName', 'lastName', 'email', 'phone', 'is_system_admin','last_logged_in', 'password', 'email_verified_at', 'system_admin_type','status'];
     protected $hidden =['password','remember_token'];
     public  function getAuthPassword(){
         return $this->password;

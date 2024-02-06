@@ -27,10 +27,7 @@ class VerifierController extends Controller
              return response()->json(['error' => 'Unauthorized'], 401);
          }
 
-         // Check if the user is a system admin
-         if (!$user->is_system_admin) {
-             return response()->json(['error' => 'Unauthorized'], 401);
-         }
+
 
          }
 
@@ -53,6 +50,13 @@ class VerifierController extends Controller
     }
 
     public function verify_institute(request $request){
+        $user = Auth::user();
+
+          // Check if the user is a system admin or admin level 1
+          if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
         $validator = Validator::make($request->all(), [
             'type' => 'required|string',
 
@@ -64,7 +68,7 @@ class VerifierController extends Controller
 
 
 
-        $user = Auth::user();
+
         $type_org = $request->type;
         if($type_org==='org'){
             //verifies an organization
@@ -248,6 +252,11 @@ class VerifierController extends Controller
 
 
 public function verify_document(request $request){
+    $user = Auth::user();
+
+    if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
 
     $validator = Validator::make($request->all(), [
         'type' => 'required|string',
@@ -285,7 +294,10 @@ public function verify_document(request $request){
 
 private function verify_educational_document($type, $id){
     //this verifies educational document
-
+    $user = Auth::user();
+    if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
     $document = EducationalDocuments::find($id);
 
 if ($document) {
@@ -300,7 +312,12 @@ return response()->json(['success' =>true,'message'=>'Document verified'], 200);
 }
 
 private function verify_professional_document($type, $id){
+    $user = Auth::user();
+    if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
     //This verifies professional document
+
     $document = ProfessionalDocuments::find($id);
 
 if ($document) {
@@ -318,6 +335,10 @@ return response()->json(['success' =>true,'message'=>'Document verified'], 200);
 }
 
 private function verify_financial_document($type,$id){
+    $user = Auth::user();
+    if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
     //This verifies professional document
     $document = FinancialDocuments::find($id);
 
@@ -336,32 +357,45 @@ return response()->json(['success' =>true,'message'=>'Document verified'], 200);
 
 private function batch_verify_educational(array $arrayOfIds){
 
+    $user = Auth::user();
+    if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
     EducationalDocuments::whereIn('id', $arrayOfIds)
     ->update([
         'status' => 'verified',
         'updated_at' => now(),
     ]);
 
+    return response()->json(['success' =>true,'message'=>'Documents verified'], 200);
 }
 
 
 private function batch_verify_professional(array $arrayOfIds){
+    $user = Auth::user();
+    if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
     ProfessionalDocuments::whereIn('id', $arrayOfIds)
     ->update([
         'status' => 'verified',
         'updated_at' => now(),
     ]);
-    return response()->json(['success' =>true,'message'=>'Document verified'], 200);
+    return response()->json(['success' =>true,'message'=>'Documents verified'], 200);
 }
 
 private function batch_verify_financial(array $arrayOfIds){
 
+    $user = Auth::user();
+    if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
     FinancialDocuments::whereIn('id', $arrayOfIds)
     ->update([
         'status' => 'verified',
         'updated_at' => now(),
     ]);
-    return response()->json(['success' =>true,'message'=>'Document verified'], 200);
+    return response()->json(['success' =>true,'message'=>'Documents verified'], 200);
 
 }
 

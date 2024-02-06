@@ -21,6 +21,9 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone');
             $table->boolean('is_system_admin');
+            $table->string('system_admin_type')->nullable();
+            $table->string('created_by_user_id')->nullable();
+            $table->string('status')->nullable();
             $table->rememberToken();
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamp('last_logged_in')->nullable();

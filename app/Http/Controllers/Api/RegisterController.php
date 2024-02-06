@@ -158,7 +158,6 @@ $user->update(['category_id'=>$category_id]);
             'email' => 'required|email|unique:users',
             'phone' =>  ['regex:/^([0-9\s\-\+\(\)]*)$/'],
             'password'=>'required|min:6|confirmed',
-            'country'=>'required|numeric|min:1',
             'category'=>'required|min:3'
         ]);
 

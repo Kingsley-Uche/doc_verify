@@ -93,7 +93,7 @@ class PaymentController extends Controller
         return response()->json(['success' => true, 'data' => $paymentDetails], 201);
     }
 
-    // ... (other methods)
+
 
     private function getEducationalCharge($userCategory)
     {

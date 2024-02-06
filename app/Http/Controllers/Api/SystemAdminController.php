@@ -235,25 +235,48 @@ unset($systemAdmin);
         }
 
 
-        public function login(Request $request)
-        {
-            $credentials = $request->only('email', 'password');
-            $userType = $request->input('user_type', 'web'); // Default to 'web' guard
 
 
 
+public function login(Request $request)
+{
+    // Sanitize input data
+    $sanitizedEmail = filter_var($request->input('email'), FILTER_SANITIZE_EMAIL);
+    $sanitizedPassword = addslashes($request->input('password'));
 
-            if (Auth::guard('system_admin')->attempt($credentials)) {
-                $user = Auth::guard('system_admin')->user();
-                $user->last_logged_in= now();
-                $user->save();
-                $token = $user->createToken('token-name');
+    $validator = Validator::make([
+        'email' => $sanitizedEmail,
+        'password' => $sanitizedPassword,
+    ], [
+        'email' => 'required|email',
+        'password' => 'required|min:6|confirmed',
+    ]);
 
-                return response()->json(['token' => $token->plainTextToken, 'user'=>$user]);
-            } else {
-                return response()->json(['error' => 'Invalid credentials'], 401);
-            }
-        }
+    if ($validator->fails()) {
+        return response()->json(['error' => $validator->errors()], 422);
+    }
+
+    $credentials = [
+        'email' => $sanitizedEmail,
+        'password' => $sanitizedPassword,
+    ];
+
+    $userType = $request->input('user_type', 'web'); // Default to 'web' guard
+
+    if (Auth::guard('system_admin')->attempt($credentials)) {
+        $user = Auth::guard('system_admin')->user();
+        $user->last_logged_in = now();
+        $user->save();
+        $token = $user->createToken('token-name');
+
+        return response()->json(['token' => $token->plainTextToken, 'user' => $user]);
+    } else {
+        return response()->json(['error' => 'Invalid credentials'], 401);
+    }
+}
+
+
+
 
 
 
@@ -278,4 +301,100 @@ unset($systemAdmin);
         }
 
 
+        public function create_admin(request $request){
+
+            //default admin password is 123456 and an admin advised to change password after creation
+            if (Auth::check()) {
+                // Get the authenticated user
+                $user = Auth::user();
+
+
+                if ($user->is_system_admin) {
+                    // The user is a system admin, proceed with the activity
+                //validate the form for new admin creation
+                $validator = Validator::make($request->all(), [
+                    'firstName' => 'required|string|max:255',
+                    'lastName' => 'required|string|max:255',
+                    'email' => 'required|email|unique:system_admin',
+                    'phone' => ['regex:/^([0-9\s\-\+\(\)]*)$/'],
+                    'admin_type'=>'required|string|max:10',
+
+                ]);
+
+
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        } else {
+            $validatedData = $validator->validated();
+            $password = Hash::make('123456');
+
+            $admin = SystemAdminModel::create([
+                'firstName' => strip_tags($validatedData['firstName']),
+                'lastName' => strip_tags($validatedData['lastName']),
+                'email' => strip_tags($validatedData['email']),
+                'phone' => strip_tags($validatedData['phone']),
+                'password' => $password,
+                'is_system_admin'=>false,
+                'system_admin_type'=>strip_tags($validatedData['admin_type']),
+            ]);
+
+
+
+            $token =$admin->createToken('api-token')->plainTextToken;
+            // Send email verification notification
+            //$systemAdmin->notify(new AdminEmailVerification);
+            $success['token']=$token;
+            $success['user']=$admin;
+            $success['message']="An otp has been sent to your email :".$request->email.'Kindly use it to verify your account';
+            $success['success']=true;
+            $admin->notify(new EmailVerificationNotification);
+
+        }
+            } else {
+                    // The user is not a system admin, deny the activity
+                    return response()->json(['error' => 'Permission denied. User is not a system admin'], 422);
+                }
+
+        }else{
+
+
+            return response()->json(['error' => 'Permission denied'], 403);
+        }
+
+
+
+
+
+
 }
+
+public function delete_admin($request){
+    $validator = Validator::make($request->all(), [
+        'id' => 'required|string|'
+
+
+    ]);
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    } else {
+        $validatedData = $validator->validated();
+        $id = strip_tags($validatedData['id']);
+        $id = SystemAdminModel::find($id);
+
+        if (!$id) {
+            return response()->json(['error' => 'admin not found'], 404);
+        }
+
+        // Perform the deletion
+        $id->delete();
+
+        return response()->json(['message' => 'Admin deleted successfully']);
+
+
+    }
+
+
+}
+}
+
