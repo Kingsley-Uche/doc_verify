@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\DocumentsController;
 use App\Http\Controllers\Api\SystemAdminController;
 use App\Http\Controllers\Api\VerificationController;
 use App\Http\Controllers\Api\ServiceChargeController;
-
+use App\Http\Controllers\Api\StaffController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -74,6 +74,11 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
     Route::post('/confirm/transaction',[PaymentController::class,'confirm_payment'])->name('payment.confirm');
 
 
+    //staff urls for only company owners
+    Route::post('/staff/create', [StaffController::class, 'create_staff'])->name('staff.create');
+    Route::post('/staff/get/all', [StaffController::class, 'get_all_staff'])->name('staff.get_all');
+    Route::post('staff/delete', [StaffController::class, 'delete_staff'])->name('staff.delete');
+    Route::post('staff/update', [StaffController::class, 'update_staff'])->name('staff.update');
 
     //These are only accessible to the system admin
     Route::post('system/admin/base/charge/create', [ServiceChargeController::class, 'createServiceCharge'])

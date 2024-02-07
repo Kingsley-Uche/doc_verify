@@ -13,6 +13,19 @@ use Illuminate\Support\Facades\Validator;
 
 class DocumentsController extends Controller
 {
+
+
+    public function __construct() {
+        $user = Auth::user();
+        if ($user->is_system_admin||$user->system_admin_type=='admin_1') {
+            return response()->json(['error' => 'Unauthorized for Adminstrators'], 401);
+        }
+
+
+    }
+
+
+
     public function upload(Request $request)
     {
 
@@ -412,13 +425,20 @@ public function view_documents(Request $request)
 
 }
 
-    private function getEducationalDocuments($docOwnerId, $type =null, $value){
+
+    private function getEducationalDocuments($docOwnerId, $type =null, $value, $doc_id){
         $user_logged_in_id = Auth::user()->id;
 
 $query = EducationalDocuments::where('doc_owner_id', $docOwnerId)
     ->where(function ($query) use ($type, $user_logged_in_id) {
-          if (isset($type)||$type!= null) {
+          if (isset($type)&&$type!= null) {
             $query->where('status', $type);
+        }
+        if(isset($doc_owner_id)&&$doc_owner_id!=null ){
+            $query->Where('doc_owner_id', $doc_owner_id);
+
+
+
         }
             $query->Where('uploaded_by_user_id', $user_logged_in_id);
 
@@ -436,7 +456,9 @@ return $educational_files;
 
     }
 
-    private function getProfessionalDocuments($docOwnerId, $type=null, $value){
+
+
+    private function getProfessionalDocuments($docOwnerId, $type=null, $value, $doc_id){
 
         $user_logged_in_id = Auth::user()->id;
 
@@ -445,6 +467,14 @@ return $educational_files;
                 if (isset($type)||$type!= null) {
                     $query->where('status', $type);
                 }
+
+                if(isset($doc_owner_id)&&$doc_owner_id!=null ){
+                    $query->Where('doc_owner_id', $doc_owner_id);
+
+
+
+                }
+
                   $query->Where('uploaded_by_user_id', $user_logged_in_id);
 
 
@@ -459,7 +489,7 @@ return $educational_files;
 
 
     }
-    private function getFinancialDocuments($docOwnerId, $type =null, $value){
+    private function getFinancialDocuments($docOwnerId, $type =null, $value, $doc_id){
 
         $user_logged_in_id = Auth::user()->id;
 
@@ -468,6 +498,13 @@ return $educational_files;
         ->where(function ($query) use ($type, $user_logged_in_id) {
             if (isset($type)||$type!= null) {
                 $query->where('status', $type);
+            }
+
+            if(isset($doc_owner_id)&&$doc_owner_id!=null ){
+                $query->Where('doc_owner_id', $doc_owner_id);
+
+
+
             }
                $query->Where('uploaded_by_user_id', $user_logged_in_id);
 
@@ -511,13 +548,52 @@ $type =null;
 
 
  $response[] = $info;
+ unset($info);
 
 return $response;
 
     }
 
 
+    public function get_document_by_id(request $request){
+
+
+        $validator = Validator::make($request->all(), [
+            'docOwnerId' => 'required|string',
+            'doc_category'=>'required|string',
+            'doc_id'=>'required|string',
+
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $data = $request->all();
+        $doc_owner_id = strip_tags($data['docOwnerId']);
+$type = strip_tags($data['doc_category']);
+$doc_id = strip_tags($data['doc_id']);
+
+
+        switch ($type) {
+            case 'educational';
+              $data =  $this->getEducationalDocument($doc_owner_id, $type,$doc_value=null, $doc_id,);
+                break;
+            case 'professional';
+              $data =  $this->getProfessionalDocument($doc_owner_id,$type, $value= null,$doc_id, );
+                break;
+            case 'financial';
+
+              $data =  $this->getFinancialDocument($doc_owner_id,$type, $value= null,$doc_id,);
+                break;
+            // Add more cases as needed...
+        }
+
+        return response()->json(['data' => $data, 'success' => true], 200);
+
+    }
 
 }
+
 
 
