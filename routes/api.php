@@ -68,6 +68,7 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
     Route::post('/get/documents', [DocumentsController::class,'view_documents'])->name('get.documents');
     Route::post('/doc/checkout',[PaymentController::class,'checkout'])->name('doc.checkout');
     Route::post('/doc/initiate/payment',[PaymentController::class,'initiatePayment'])->name('doc.payinit');
+    Route::post('/get/doc/by_id',[PaymentController::class,'get_document_by_id'])->name('doc.get_by_id');
 
     Route::get('/institutions/all',[Institutions::class,'getAllInstitution'])->name('institutions.all');
     Route::post('get/by/docOwnerId',[DocumentsController::class,'get_by_doc_owner_id'])->name('get.docByOwnerId');
