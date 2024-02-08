@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('course');
             $table->longText('doc_verifier_name');
             $table->bigInteger('doc_verifier_id')->nullable();
+            $table->string('doc_type')->default('prof');
             $table->string('country_code');
             $table->string('studentId');
             $table->string('qualification');

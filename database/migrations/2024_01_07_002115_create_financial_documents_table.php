@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('financial_documents', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('doc_owner_id');
+            $table->string('doc_type')->default('finance');
             $table->string('bank_name');
             $table->longText('description')->nullable();
             $table->string('country_code');

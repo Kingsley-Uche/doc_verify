@@ -539,9 +539,9 @@ $type =null;
 
 
 
-        $documentSet['educationalDocuments']= $this->getEducationalDocuments($doc_owner_id, $type, $value=null);
-        $documentSet['professionalDocuments']=$this->getProfessionalDocuments($doc_owner_id, $type, $value = null);
-    $documentSet['financialDocuments'] =$this->getFinancialDocuments($doc_owner_id, $type, $value= null);
+        $documentSet['educationalDocuments']= $this->getEducationalDocuments($doc_owner_id, $type, $value=null, $doc_id= null,);
+        $documentSet['professionalDocuments']=$this->getProfessionalDocuments($doc_owner_id, $type, $value = null, $doc_id = null);
+    $documentSet['financialDocuments'] =$this->getFinancialDocuments($doc_owner_id, $type, $value= null, $doc_id=null);
 
  $info['user']['documents']=$documentSet;
  $info['user']['info']=document_owner::where('id', '=', $doc_owner_id)->get();
@@ -571,18 +571,18 @@ return $response;
 
         $data = $request->all();
         $doc_owner_id = strip_tags($data['docOwnerId']);
-$type = strip_tags($data['doc_category']);
+$type = strip_tags($data['type']);
 $doc_id = strip_tags($data['doc_id']);
 
 
         switch ($type) {
-            case 'educational';
+            case 'educ';
               $data =  $this->getEducationalDocument($doc_owner_id, $type,$doc_value=null, $doc_id,);
                 break;
-            case 'professional';
+            case 'prof';
               $data =  $this->getProfessionalDocument($doc_owner_id,$type, $value= null,$doc_id, );
                 break;
-            case 'financial';
+            case 'finance';
 
               $data =  $this->getFinancialDocument($doc_owner_id,$type, $value= null,$doc_id,);
                 break;

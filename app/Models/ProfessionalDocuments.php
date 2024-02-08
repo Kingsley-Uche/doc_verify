@@ -24,6 +24,7 @@ class ProfessionalDocuments extends Model
         'ref_id',
         'application_id',
         'status',
+        'doc_type',
         'uploaded_by_user_id',
 
     ];

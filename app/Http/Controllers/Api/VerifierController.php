@@ -397,7 +397,47 @@ private function batch_verify_financial(array $arrayOfIds){
     ]);
     return response()->json(['success' =>true,'message'=>'Documents verified'], 200);
 
+
 }
+  private function get_document_by_id(request $request){
+
+    $user = Auth::user();
+
+
+
+    $validator = Validator::make($request->all(), [
+        'type' => 'required|string',
+        'id' => 'string|required',
+
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+
+
+    $type =strip_tags($request->type);
+    $doc_id = strip_tags($request->id);
+    $docOwnerId = strip_tags($request->doc_owner_id);
+
+
+    switch ($type) {
+        case 'educ':
+           $data=  $this->verify_educational_document($type, $doc_id);
+            break;
+        case 'prof':
+           $data = $this->verify_professional_document($type, $doc_id);
+            break;
+        case 'finance':
+
+            $data = $this->verify_financial_document($type,$doc_id);
+            break;
+
+    }
+    return response()->json(['success' =>true,'data'=>$data], 200);
+
+  }
 
 }
 

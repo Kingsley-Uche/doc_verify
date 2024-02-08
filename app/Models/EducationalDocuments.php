@@ -15,6 +15,7 @@ class EducationalDocuments extends Model
         'verifier_id',
         'verifier_city',
         'country_code',
+        'doc_type',
         'studentId',
         'enrollment_status',
         'start_year',

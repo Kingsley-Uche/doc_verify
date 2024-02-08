@@ -11,6 +11,7 @@ class FinancialDocuments extends Model
     protected $fillable =[
         'doc_owner_id',
         'bank_name',
+        'doc_type',
         'country_code',
         'description',
         'doc_path',

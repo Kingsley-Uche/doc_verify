@@ -31,6 +31,7 @@ return new class extends Migration
             $table->longText('doc_info');
             $table->longText('application_id')->nullable();
             $table->string('status');
+            $table->string('doc_type')->default('educ');
             $table->string('uploaded_by_user_id');
             $table->longText('viewer_code')->nullable();
             $table->timestamps();
