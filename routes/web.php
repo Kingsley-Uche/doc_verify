@@ -18,10 +18,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/verify/email/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $data =$request->fulfill();
-    dd($data);
-    echo 'verified!';
+// Route::get('/verify/email/{id}/{hash}', function (EmailVerificationRequest $request) {
+//     $data =$request->fulfill();
+//     dd($data);
+//     echo 'verified!';
 
-    return redirect('/home');
-})->middleware(['auth', 'signed'])->name('verification.verify');
+//     return redirect('/home');
+// })->middleware(['auth', 'signed'])->name('verification.verify');

@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\company;
+use App\Models\User;
 //use App\Http\Middleware\SystemManagerMiddleware;
+use App\Models\company;
 use App\Models\institutions;
 use Illuminate\Http\Request;
 use App\Models\document_owner;
@@ -246,7 +247,21 @@ public function get_document_by_id(request $request){
             break;
 
     }
+
+    if(isset($data)&&$data!==null){
+        $uploaded_user_id =$data['document']->first()->uploaded_by_user_id;
+        $flag = 'yes';
+
+   }
+   if($flag==='yes'){
+    $data['uploaded_by_user']= User::where('id','=',$uploaded_user_id)->first();
+
+   }
+
+
+
     $data['owner']= document_owner::where('id', '=', $docOwnerId)->first();
+
     return response()->json(['success' =>true,'data'=>$data], 200);
 
   }
