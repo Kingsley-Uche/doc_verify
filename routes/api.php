@@ -68,7 +68,7 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
     Route::post('/get/documents', [DocumentsController::class,'view_documents'])->name('get.documents');
     Route::post('/doc/checkout',[PaymentController::class,'checkout'])->name('doc.checkout');
     Route::post('/doc/initiate/payment',[PaymentController::class,'initiatePayment'])->name('doc.payinit');
-    Route::post('/get/doc/by_id',[PaymentController::class,'get_document_by_id'])->name('doc.get_by_id');
+    Route::post('/get/doc/by_id',[DocumentsController::class,'get_document_by_id'])->name('doc.get_by_id');
 
     Route::get('/institutions/all',[Institutions::class,'getAllInstitution'])->name('institutions.all');
     Route::post('get/by/docOwnerId',[DocumentsController::class,'get_by_doc_owner_id'])->name('get.docByOwnerId');
@@ -105,6 +105,10 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
 
     Route::get('system/admin/get/all/documents', [VerifierController::class, 'get_all_documents'])
     ->name('view.documents');
+
+    Route::post('system/admin/get/single/document', [VerifierController::class, 'get_document_by_id'])
+    ->name('view.documents.id');
+
     Route::get('system/admin/verify/document', [VerifierController::class, 'verify_document'])
     ->name('verify.document');
 

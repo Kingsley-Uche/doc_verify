@@ -249,7 +249,7 @@ public function login(Request $request)
         'password' => $sanitizedPassword,
     ], [
         'email' => 'required|email',
-        'password' => 'required|min:6|confirmed',
+        'password' => 'required|min:6',
     ]);
 
     if ($validator->fails()) {

@@ -193,8 +193,8 @@ class VerifierController extends Controller
 
 
 
-        $info['user']['documents'] = $documentSet;
-        $info['user']['info'] = $value;
+        $info['documents'] = $documentSet;
+        $info['doc_owner'] = $value;
         $response[] = $info;
 
        unset($documentSet);
@@ -208,43 +208,140 @@ class VerifierController extends Controller
 }
 
 
-    private function getEducationalDocuments($docOwnerId, $type =null){
-        $query = EducationalDocuments::where('doc_owner_id', $docOwnerId);
+public function get_document_by_id(request $request){
 
-        if ($type !== null) {
-            $query->where('status', $type);
-        }
+    $user = Auth::user();
+
+
+
+    $validator = Validator::make($request->all(), [
+        'docOwnerId' => 'required|string',
+        'doc_category'=>'required|string',
+        'doc_id'=>'required|string',
+
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+
+
+    $cat =strip_tags($request->doc_category);
+    $doc_id = strip_tags($request->doc_id);
+    $docOwnerId = strip_tags($request->docOwnerId);
+
+
+    switch ($cat) {
+
+        case 'educ':
+           $data['document']=  $this->getEducationalDocuments($docOwnerId, $type=null,$value=null, $doc_id);
+            break;
+        case 'prof':
+           $data['document'] = $this->getProfessionalDocuments($docOwnerId, $type=null,$value=null, $doc_id);
+            break;
+        case 'finance':
+
+            $data['document'] = $this->getFinancialDocuments($docOwnerId, $type=null,$value=null, $doc_id);
+            break;
+
+    }
+    $data['owner']= document_owner::where('id', '=', $docOwnerId)->first();
+    return response()->json(['success' =>true,'data'=>$data], 200);
+
+  }
+
+
+    private function getEducationalDocuments($docOwnerId,$type, $value, $doc_id=null){
+
+
+        $query = EducationalDocuments::where('doc_owner_id', $docOwnerId)
+        ->where(function ($query) use ($type,$doc_id) {
+            if (isset($type)||$type!= null) {
+                $query->where('status', $type);
+            }
+
+            if(isset($docOwnerId)&&$docOwnerId!=null ){
+                $query->Where('doc_owner_id', $docOwnerId);
+
+
+
+            }
+            if(isset($doc_id)&& $doc_id!=null){
+                $query->Where('id','=',$doc_id);
+            }
+
+
+
+
+        });
 
         $educational_files = $query->get();
+
 
         return $educational_files;
 
     }
 
-    private function getProfessionalDocuments($docOwnerId, $type=null){
+    private function getProfessionalDocuments($docOwnerId,$type, $value, $doc_id=null){
 
-        $query = ProfessionalDocuments::where('doc_owner_id', $docOwnerId);
 
-        if ($type !== null) {
-            $query->where('status', $type);
-        }
+        $query = ProfessionalDocuments::where('doc_owner_id', $docOwnerId)
+        ->where(function ($query) use ($type,$doc_id) {
+            if (isset($type)||$type!= null) {
+                $query->where('status', $type);
+            }
 
-        $professional_files = $query->get();
+            if(isset($docOwnerId)&&$docOwnerId!=null ){
+                $query->Where('doc_owner_id', $docOwnerId);
 
-        return $professional_files;
+
+
+            }
+            if(isset($doc_id)&& $doc_id!=null){
+                $query->Where('id','=',$doc_id);
+            }
+
+
+
+
+        });
+
+        $educational_files = $query->get();
+
+
+        return $educational_files;
 
     }
-    private function getFinancialDocuments($docOwnerId, $type =null){
+    private function getFinancialDocuments($docOwnerId,$type, $value, $doc_id=null){
 
-        $query = FinancialDocuments::where('doc_owner_id', $docOwnerId);
 
-        if ($type !== null) {
-            $query->where('status', $type);
-        }
+        $query = FinancialDocuments::where('doc_owner_id', $docOwnerId)
+        ->where(function ($query) use ($type,$doc_id) {
+            if (isset($type)||$type!= null) {
+                $query->where('status', $type);
+            }
 
-        $financial_files = $query->get();
+            if(isset($docOwnerId)&&$docOwnerId!=null ){
+                $query->Where('doc_owner_id', $docOwnerId);
 
-        return $financial_files;
+
+
+            }
+            if(isset($doc_id)&& $doc_id!=null){
+                $query->Where('id','=',$doc_id);
+            }
+
+
+
+
+        });
+
+        $educational_files = $query->get();
+
+
+        return $educational_files;
+
 
     }
 
@@ -399,45 +496,6 @@ private function batch_verify_financial(array $arrayOfIds){
 
 
 }
-  private function get_document_by_id(request $request){
 
-    $user = Auth::user();
-
-
-
-    $validator = Validator::make($request->all(), [
-        'type' => 'required|string',
-        'id' => 'string|required',
-
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json(['errors' => $validator->errors()], 422);
-    }
-
-
-
-    $type =strip_tags($request->type);
-    $doc_id = strip_tags($request->id);
-    $docOwnerId = strip_tags($request->doc_owner_id);
-
-
-    switch ($type) {
-        case 'educ':
-           $data=  $this->verify_educational_document($type, $doc_id);
-            break;
-        case 'prof':
-           $data = $this->verify_professional_document($type, $doc_id);
-            break;
-        case 'finance':
-
-            $data = $this->verify_financial_document($type,$doc_id);
-            break;
-
-    }
-    return response()->json(['success' =>true,'data'=>$data], 200);
-
-  }
 
 }
-

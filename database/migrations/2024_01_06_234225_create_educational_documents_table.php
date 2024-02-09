@@ -18,8 +18,8 @@ return new class extends Migration
             $table->bigInteger('doc_owner_id');
             $table->string('country_code');
             $table->string('studentId');//matric number
-            $table->string('date_of_issue');
-            $table->string('exam_board');
+            $table->string('date_of_issue')->nullable();
+            $table->string('exam_board')->nullable();
             $table->string('verifier_name');
             $table->bigInteger('verifier_id')->nullable();
             $table->string('verifier_city');
