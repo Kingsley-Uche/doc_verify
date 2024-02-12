@@ -111,8 +111,7 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
 
     Route::get('system/admin/verify/document', [VerifierController::class, 'verify_document'])
     ->name('verify.document');
-
-});
+    Route::post('system/admin/update/document', [VerifierController::class,'docUpdate'])->name('update.document');
 
 
 
@@ -121,3 +120,5 @@ Route::group(['middleware' => [SystemManagerMiddleware::class]], function () {
 
 
 });
+}
+);

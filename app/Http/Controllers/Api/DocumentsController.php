@@ -20,6 +20,10 @@ class DocumentsController extends Controller
         if ($user !== null && ($user->is_system_admin || $user->system_admin_type == 'admin_1')) {
             abort(401, 'Unauthorized for Administrators');
         }
+
+        if ($user == null) {
+            abort(401, 'Unauthorized Access');
+        }
     }
 
 

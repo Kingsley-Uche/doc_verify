@@ -109,10 +109,28 @@ class VerifierController extends Controller
 
     }
     public function get_all_companies(){
-        $companies =company::select('company_name', 'company_industry','company_country_id','company_ref','company_created_by_user_id','updated_at')->get();
-        return response()->json(['success' =>true,'data'=>$companies], 200);
 
-    }
+        // Assuming your model name is Company (starting with a capital letter as per convention)
+  $companies = Company::select(
+      'firstName', // Assuming these fields are in the 'users' table, you'll need to prefix them with 'users.'
+      'lastName',
+      'phone',
+      'email',
+      'companies.company_name',
+      'companies.company_industry',
+      'companies.company_ref',
+      'companies.company_created_by_user_id',
+      'companies.updated_at as dateOfCompanyUpdate',
+      'country.id as CountryCode',
+      'country.name as CountryName'
+  )
+  ->leftJoin('users', 'users.id', '=', 'companies.company_created_by_user_id')->leftJoin('country', 'country.id','=', 'company_country_id')
+  ->get();
+
+  return response()->json(['success' => true, 'data' => $companies], 200);
+
+
+      }
 
     public function get_all_institutions(){
         $institution =institutions::select('id', 'name')->get();
@@ -508,6 +526,166 @@ private function batch_verify_financial(array $arrayOfIds){
         'updated_at' => now(),
     ]);
     return response()->json(['success' =>true,'message'=>'Documents verified'], 200);
+
+
+}
+
+
+private function update_document($type, $doc_id){
+
+    $user = Auth::user();
+    if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+    $doc_type = strip_tags($type);
+    $doc_id = strip_tags($type);
+    switch ($doc_type) {
+
+        case 'educ':
+           $data['document']=  $this->updateEducationalDocuments($doc_id);
+            break;
+        case 'prof':
+           $data['document'] = $this->updateProfessionalDocuments($doc_id);
+            break;
+        case 'finance':
+
+            $data['document'] = $this->updateFinancialDocuments($doc_id);
+            break;
+
+    }
+
+
+
+}
+private function updateDocOwner($data){
+
+
+}
+
+private function updateEducationalDocument($data){
+    $doc_id = strip_tags($data['id']);
+    $doc_owner_id = strip_tags($data['docOwnerId']);
+    if (isset($data['file'])) {
+        $validator = Validator::make($data, [
+            'file' => 'required|mimes:pdf|max:2048', // Validate the 'file'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Only PDF files are allowed and size must not exceed 2MB'], 422);
+        }
+
+
+        $educ = EducationalDocuments::where('id', $doc_id)->where('doc_owner_id', $doc_owner_id)->first();
+
+        if ($educ && $educ->doc_path) {
+            $educ_path = public_path($educ->doc_path);
+
+
+            if (file_exists($educ_path)) {
+                unlink($educ_path); // Delete the file
+            }
+
+        }
+        $file = $data['file'];
+        $ext = $file->getClientOriginalExtension();
+        $newFileName = time() . '_' . $index . '_' . $name;
+        $path = 'uploads/docs/' . $newFileName . "_$type" . '.' . $ext;
+        $file->move(public_path('uploads/docs'), $path);
+
+        // Continue with any other logic after file deletion
+    }
+
+
+
+    dd($data);
+
+    //upload educational document if given
+
+
+   $educ = EducationalDocuments::where('id', '=',$doc_id)->where('doc_owner_id', '=', $doc_owner_id)->first();
+//    $educ->update([
+//     'course'=>strip_tags($data['courseOrSubject']),
+//     'doc_verifier_country' =>strip_tags( $data['schoolCountryEduc']),
+//     'document_category' => 'educational',
+//     'country_code'=>strip_tags($data['schoolCountryEduc']),
+//     'doc_owner_id'=>strip_tags($docOwnerId),
+//     'studentId' => strip_tags($data['matricNumber']),
+//     'exam_board' => isset($data['examBoard']) ? strip_tags($data['examBoard']) : null,
+//     'verifier_name' => strip_tags($data['schoolNameEduc']),
+//     'verifier_id'=>null,
+//     'viewer_code'=>null,
+//     'verifier_city' => strip_tags($data['schoolCity']),
+//     'status'=>'submitted',
+//     'ref_id'=> strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
+//     'start_year' =>strip_tags($data['enrollmentYearEduc']),
+//     'end_year' => strip_tags($data['graduationYearEduc']),
+//     'doc_info' => isset($data['addInfo'][$key]) ? strip_tags($data['addInfo']) : null,
+//     'course' =>strip_tags($data['courseOrSubject']),
+//     'doc_path'=>$path,
+//     'created_at' => now(),
+//     'updated_at' => now(),
+//     'uploaded_by_user_id'=>Auth::user()->id
+
+//    ]);
+
+}
+
+private function updateProfessionalDocuments($data){
+
+}
+private function updateFinancialDocument($data){
+
+}
+
+public function docUpdate(request $request){
+
+    $data = $request->all();
+    $validator = Validator::make($request->all(), [
+        'docOwnerId' => 'required|string',
+        'id' => 'string|required',
+
+    ]);
+    if(isset($data['schoolNameEduc']) && $data['schoolNameEduc']!=null
+    ||isset($data['schoolCountryEduc'])&& $data['schoolCountryEduc']!==null
+    || isset($data['enrollmentYearEduc'])&& $data['enrollmentYearEduc']!=null){
+
+        $doc_type = 'educ';
+
+
+    }else if(isset($data['schoolNameProf[']) && $data['schoolNameProf']!=null
+    ||isset($data['enrolmentStatusProf'])&& $data['enrolmentStatusProf']!=null
+    || isset($data['profCourse'])&& $data['profCourse']!=null){
+
+        $doc_type = 'prof';
+
+    }elseif(isset($data['finName']) && $data['finName']!=null
+    ||isset($data['finCountry'])&& $data['finCountry']!=null){
+
+        $doc_type = 'finance';
+
+    }else{
+
+
+        return response()->json(['success' =>false,'message'=>'Invalid Access'], 401);
+
+
+    }
+
+
+    switch ($doc_type) {
+
+        case 'educ':
+         $this->updateEducationalDocument($data);
+            break;
+        case 'prof':
+            $this->updateProfessionalDocument($data);
+            break;
+        case 'finance':
+
+             $this->updateFinancialDocument($data);
+            break;
+
+    }
 
 
 }

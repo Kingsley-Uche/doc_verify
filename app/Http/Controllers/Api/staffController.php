@@ -182,7 +182,7 @@ public function update_staff(Request $request)
         'firstName' => isset($data['firstName']) ? strip_tags($data['firstName']) : $staffToUpdate->firstName,
         'lastName' => isset($data['lastName']) ? strip_tags($data['lastName']) : $staffToUpdate->lastName,
         'email' => isset($data['email']) ? strip_tags($data['email']) : $staffToUpdate->email,
-        'password' => Hash::make('123456'), // Assuming you always want to update the password
+        'password' => Hash::make('1234567'), // Assuming you always want to update the password
         'phone' => 'N/A',
         'user_company_id' => $user->user_company_id,
         'created_by_user_id' => $user->id,
