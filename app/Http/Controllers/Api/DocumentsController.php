@@ -469,6 +469,7 @@ return $educational_files;
     }
 
 
+    
 
     private function getProfessionalDocuments($docOwnerId, $type=null, $value, $doc_id){
 
@@ -542,6 +543,7 @@ return $educational_files;
 
 
     }
+
 
     public function get_by_doc_owner_id(request $request){
 $type =null;

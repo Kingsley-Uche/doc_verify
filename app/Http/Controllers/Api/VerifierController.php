@@ -101,6 +101,7 @@ class VerifierController extends Controller
 
 
 
+
         }
 
         //handles verification of institutes after signup
@@ -563,7 +564,7 @@ private function updateDocOwner($data){
 }
 
 private function updateEducationalDocument($data){
-    $doc_id = strip_tags($data['id']);
+    $doc_id = strip_tags($data['doc_id']);
     $doc_owner_id = strip_tags($data['docOwnerId']);
     if (isset($data['file'])) {
         $validator = Validator::make($data, [
@@ -575,20 +576,24 @@ private function updateEducationalDocument($data){
         }
 
 
-        $educ = EducationalDocuments::where('id', $doc_id)->where('doc_owner_id', $doc_owner_id)->first();
+        $educ = EducationalDocuments::join('document_owners', 'document_owners.id', '=', 'educational_documents.doc_owner_id')
+    ->where('educational_documents.id', $doc_id) // Specify the table for clarity
+    ->where('document_owners.id', $doc_owner_id) // This assumes you meant to filter by the owner's ID explicitly
+    ->first();
 
         if ($educ && $educ->doc_path) {
             $educ_path = public_path($educ->doc_path);
 
-
             if (file_exists($educ_path)) {
                 unlink($educ_path); // Delete the file
             }
+$name = $educ->docOwnerFirstName;
+$type = $educ->doc_type;
 
         }
         $file = $data['file'];
         $ext = $file->getClientOriginalExtension();
-        $newFileName = time() . '_' . $index . '_' . $name;
+        $newFileName = time() . '_' . 'updated' . '/'.$name;
         $path = 'uploads/docs/' . $newFileName . "_$type" . '.' . $ext;
         $file->move(public_path('uploads/docs'), $path);
 
@@ -597,36 +602,64 @@ private function updateEducationalDocument($data){
 
 
 
-    dd($data);
 
-    //upload educational document if given
+    $updateData = [
+        'doc_type' => 'educ',
+        'status' => 'submitted',
+        'updated_at' => now(),
+        'uploaded_by_user_id' => Auth::user()->id,
+        'doc_owner_id'=>strip_tags($doc_owner_id),
+    ];
 
 
-   $educ = EducationalDocuments::where('id', '=',$doc_id)->where('doc_owner_id', '=', $doc_owner_id)->first();
-//    $educ->update([
-//     'course'=>strip_tags($data['courseOrSubject']),
-//     'doc_verifier_country' =>strip_tags( $data['schoolCountryEduc']),
-//     'document_category' => 'educational',
-//     'country_code'=>strip_tags($data['schoolCountryEduc']),
-//     'doc_owner_id'=>strip_tags($docOwnerId),
-//     'studentId' => strip_tags($data['matricNumber']),
-//     'exam_board' => isset($data['examBoard']) ? strip_tags($data['examBoard']) : null,
-//     'verifier_name' => strip_tags($data['schoolNameEduc']),
-//     'verifier_id'=>null,
-//     'viewer_code'=>null,
-//     'verifier_city' => strip_tags($data['schoolCity']),
-//     'status'=>'submitted',
-//     'ref_id'=> strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
-//     'start_year' =>strip_tags($data['enrollmentYearEduc']),
-//     'end_year' => strip_tags($data['graduationYearEduc']),
-//     'doc_info' => isset($data['addInfo'][$key]) ? strip_tags($data['addInfo']) : null,
-//     'course' =>strip_tags($data['courseOrSubject']),
-//     'doc_path'=>$path,
-//     'created_at' => now(),
-//     'updated_at' => now(),
-//     'uploaded_by_user_id'=>Auth::user()->id
+    if (isset($data['courseOrSubject'])) {
+        $updateData['course'] = strip_tags($data['courseOrSubject']);
+    }
 
-//    ]);
+    if (isset($data['schoolCountryEduc'])) {
+        $updateData['country_code'] = strip_tags($data['schoolCountryEduc']);
+    }
+
+    if (isset($data['matricNumber'])) {
+        $updateData['studentId'] = strip_tags($data['matricNumber']);
+    }
+
+    if (isset($data['examBoard'])) {
+        $updateData['exam_board'] = strip_tags($data['examBoard']);
+    }
+
+    if (isset($data['schoolNameEduc'])) {
+        $updateData['verifier_name'] = strip_tags($data['schoolNameEduc']);
+    }
+
+    if (isset($data['schoolCity'])) {
+        $updateData['verifier_city'] = strip_tags($data['schoolCity']);
+    }
+
+    if (isset($data['enrollmentYearEduc'])) {
+        $updateData['start_year'] = strip_tags($data['enrollmentYearEduc']);
+    }
+
+    if (isset($data['graduationYearEduc'])) {
+        $updateData['end_year'] = strip_tags($data['graduationYearEduc']);
+    }
+
+    if (isset($data['addInfo'])) {
+        $updateData['doc_info'] = strip_tags($data['addInfo']);
+    }
+
+    if (isset($path)) {
+        $updateData['doc_path'] = $path;
+    }
+
+    //update in the database
+
+    $educ->where('id', '=', $doc_id)->update($updateData);
+
+
+
+
+
 
 }
 
@@ -639,12 +672,42 @@ private function updateFinancialDocument($data){
 
 public function docUpdate(request $request){
 
+
     $data = $request->all();
     $validator = Validator::make($request->all(), [
         'docOwnerId' => 'required|string',
-        'id' => 'string|required',
+        'doc_id' => 'string|required',
 
     ]);
+    $record = [];
+
+    if(isset($data['firstName']) &&$data['firstName']!=null){
+        $record['docOwnerFirstName']=strip_tags( $data['firstName']);
+
+
+    }
+    if(isset($data['lastName'])&&$data['lastName']!=null){
+        $record['docOwnerLastName']= strip_tags($data['lastName']);
+
+
+    }
+    if(isset($data['middleName'])&&$data['middleName']!=null){
+        $record['docOwnerMiddleName']= strip_tags($data['middleName']);
+
+
+
+    }
+    if(isset($data['dob']) &&$data['dob']!=null){
+        $record['docOwnerDOB']= strip_tags($data['dob']);
+
+
+    }
+
+    $owner = document_owner::find(strip_tags($data['docOwnerId']));
+    if($owner){
+        $owner->update($record);
+    }
+
     if(isset($data['schoolNameEduc']) && $data['schoolNameEduc']!=null
     ||isset($data['schoolCountryEduc'])&& $data['schoolCountryEduc']!==null
     || isset($data['enrollmentYearEduc'])&& $data['enrollmentYearEduc']!=null){
@@ -675,17 +738,20 @@ public function docUpdate(request $request){
     switch ($doc_type) {
 
         case 'educ':
-         $this->updateEducationalDocument($data);
+        $data = $this->updateEducationalDocument($data);
             break;
         case 'prof':
-            $this->updateProfessionalDocument($data);
+         $data =   $this->updateProfessionalDocument($data);
             break;
         case 'finance':
 
-             $this->updateFinancialDocument($data);
+           $data =  $this->updateFinancialDocument($data);
             break;
 
     }
+
+    return response()->json(['success' =>true,'message'=>'updated successfully'], 201);
+
 
 
 }

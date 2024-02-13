@@ -126,6 +126,7 @@ $token =$user->createToken('api-token')->plainTextToken;
 category_user::create([
     'category_name'=>$validatedData['category'],
     'category_user_id'=>$user_id,
+    'category_company_id'=>$company_id,
 ]);
 $category_id =category_user::latest()->first()->id;
 

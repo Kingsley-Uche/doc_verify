@@ -67,7 +67,7 @@ private function save_charge($doc_category,$doc_charge,$category_user){
     serviceCharge::create([
 'doc_cat'=>strip_tags(strtolower($doc_category)),
 'doc_charge'=>strip_tags(strtolower(round($doc_charge, 2))),
-'category_user'=>strip_tags(strtolower($category_user)),
+'category_user_id'=>strip_tags(strtolower($category_user)),
 'created_admin_id'=>Auth::user()->id,
 
 
@@ -122,5 +122,14 @@ private function update_charge($doc_category, $doc_charge,$category_user,$id){
 
 
 }
+public function view_service_charge(){
+    //fetch all service charge;
+    $serviceCharge = serviceCharge::all();
+    return response()->json(['success' =>true,'data'=> $serviceCharge], 200);
+
+}
+
+
+
 
 }

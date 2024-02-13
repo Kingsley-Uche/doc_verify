@@ -84,7 +84,11 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
     //These are only accessible to the system admin
     Route::post('system/admin/base/charge/create', [ServiceChargeController::class, 'createServiceCharge'])
     ->name('base.charge');
+    Route::post('system/admin/base/charge/get', [ServiceChargeController::class, 'view_service_charge'])
+    ->name('view.charge');
     //Create service Charge
+
+    
 
     Route::post('system/admin/get/org/by/country', [VerifierController::class, 'getOrgByCountry'])
     ->name('country.company');

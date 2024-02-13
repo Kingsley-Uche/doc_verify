@@ -98,6 +98,7 @@ class StaffController extends Controller
                     category_user::create([
                         'category_name'=>'staff',
                         'category_user_id'=>$user_id,
+                        'category_company_id'=>$staff->user_company_id,
                     ]);
                     $category_id =category_user::latest()->first()->id;
 
