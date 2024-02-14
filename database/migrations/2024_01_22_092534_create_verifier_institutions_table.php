@@ -15,10 +15,14 @@ return new class extends Migration
     {
         Schema::create('verifier_institutions', function (Blueprint $table) {
             $table->id();
-            $table->string('institution_id')->nullable();
-            $table->string('company_id')->nullable();
-            $table->string('verified_admin_id');
+            $table->string('country_name');
+            $table->string('country_code');
+            $table->string('institution_id');
+            $table->string('institution_name');
+            $table->string('registerd_by_admin_id');
             $table->string('verifier_status');
+            $table->string('inst_ref');
+            $table->bigInteger('contact_user_id');
             $table->timestamps();
         });
     }

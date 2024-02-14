@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Institutions;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\VerifierController;
@@ -14,7 +15,7 @@ use App\Http\Controllers\Api\DocumentsController;
 use App\Http\Controllers\Api\SystemAdminController;
 use App\Http\Controllers\Api\VerificationController;
 use App\Http\Controllers\Api\ServiceChargeController;
-use App\Http\Controllers\Api\StaffController;
+use App\Http\Controllers\Api\VerfyingInstitutionController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -88,7 +89,10 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
     ->name('view.charge');
     //Create service Charge
 
-    
+    Route::post('system/admin/base/charge/update', [ServiceChargeController::class, 'edit_charge'])
+    ->name('view.edit');
+
+
 
     Route::post('system/admin/get/org/by/country', [VerifierController::class, 'getOrgByCountry'])
     ->name('country.company');
@@ -102,9 +106,12 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
 
     Route::post('system/admin/get/all/inst', [VerifierController::class, 'get_all_institutions'])
     ->name('institutes.all');
+
+    Route::post('system/admin/add/verifier/institute', [VerfyingInstitutionController::class, 'register_verifier'])
+    ->name('register.verify.institute');
     Route::post('system/admin/verify/institute', [VerifierController::class, 'verify_institute'])
     ->name('verify.institute');
-    Route::get('system/admin/view/verified/institution', [VerifierController::class, 'view_verified_institution'])
+    Route::get('system/admin/view/verifier/institution', [VerifierController::class, 'view_verified_institution'])
     ->name('verified.institutes');
 
     Route::get('system/admin/get/all/documents', [VerifierController::class, 'get_all_documents'])

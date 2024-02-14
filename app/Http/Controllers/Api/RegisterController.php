@@ -109,6 +109,7 @@ public function register(request $request){
         'email'=>strtolower(strip_tags($validatedData['email'])),
         'password'=> Hash::make(strip_tags($validatedData['password'])),
         'user_company_id'=>$company->id,
+        'company_ref'=>$company_ref
     ],
     );
     //update comapny table to save the user that created the company;

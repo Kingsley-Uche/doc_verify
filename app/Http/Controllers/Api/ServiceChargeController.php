@@ -86,6 +86,8 @@ public function edit_charge(request $request)
         'baseCharge.*' => 'required|array',
         'baseCharge.*' => 'required|numeric|between:1,100000.99',
         'category_user'=>'required|string',//This was put diffrent because there might lower charge for organizations
+        'doc_id'=>'required|array',
+        'doc_id.*'=>'required|numeric',
     ]);
 
     if ($validator->fails()) {
@@ -96,16 +98,18 @@ public function edit_charge(request $request)
         $doc = $request->input('docCateg');
         $base_charge = $request->input('baseCharge');
         $category_user = $request->input('category_user');
-        $doc_id = $request->input('id');
+        $doc_id = $request->input('doc_id');
+
 
         foreach($doc as $doc_cat){
             $doc_category = strip_tags($doc_cat);
-            $doc_charge = strip_tags($base_charge[$i]);
-            $category_user =strip_tags($category_user);
+            $doc_charge = round(strip_tags($base_charge[$i]),2);
+            $category_user=strip_tags($category_user);
             $id =strip_tags($doc_id[$i]);
             $this->update_charge($doc_category, $doc_charge,$category_user,$id);
             $i++;
     }
+
     return response()->json(['success' =>true,'message'=>'Service charge updated successfully'], 201);
 
 

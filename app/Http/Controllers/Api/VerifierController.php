@@ -54,18 +54,22 @@ class VerifierController extends Controller
         $user = Auth::user();
 
           // Check if the user is a system admin or admin level 1
-          if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
+
+          if (!$user->is_system_admin||!$user->system_admin_type='admin_1') {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+ if(isset($request->type)||$request->type!=null){
+    $validator = Validator::make($request->all(), [
+        'type' => 'required|string',
 
-        $validator = Validator::make($request->all(), [
-            'type' => 'required|string',
+    ]);
 
-        ]);
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+
+ }
 
 
 
@@ -133,11 +137,15 @@ class VerifierController extends Controller
 
       }
 
+
+
     public function get_all_institutions(){
         $institution =institutions::select('id', 'name')->get();
         return response()->json(['success' =>true,'data'=>$institution], 200);
 
     }
+
+
 
     public function getInstByCountry(request $request){
 
@@ -154,17 +162,26 @@ class VerifierController extends Controller
         return response()->json(['success' =>true,'data'=>$institution], 200);
 
     }
-    public function view_verified_institution(){
- $verified_institutions = verifier_institution::select('name', 'institution_id', 'verifier_institutions.company_id', 'verified_admin_id', 'verifier_status')
-    ->leftJoin('institutions', 'institutions.id', '=', 'verifier_institutions.institution_id')
-    ->leftJoin('companies', 'companies.id', '=', 'verifier_institutions.institution_id')
-    ->where('verifier_institutions.verifier_status', '=', "verified")
-    ->get();
+
+
+    public function view_verified_institution(request $request){
+        $data = $request->all();
+
+        $query = verifier_institution::query();
+
+        if (isset($data['type']) && $data['type'] !== null) {
+            $type = strip_tags($data['type']);
+            $query->where('verifier_status', '=', $type);
+        }
+        $verified_institutions = $query->get();
 
     return response()->json(['success' =>true,'data'=>$verified_institutions], 200);
 
 
     }
+
+
+
     public function get_all_documents(request $request){
         if($request->type){
             $validator = Validator::make($request->all(), [
@@ -558,7 +575,18 @@ private function update_document($type, $doc_id){
 
 
 }
-private function updateDocOwner($data){
+private function updateDocOwner($record, $data){
+
+
+
+
+    $owner = document_owner::find(strip_tags($data['docOwnerId']));
+    if($owner){
+        $owner->update($record);
+    }
+    unset($data);
+    unset($owner);
+    return true;
 
 
 }
@@ -655,6 +683,7 @@ $type = $educ->doc_type;
     //update in the database
 
     $educ->where('id', '=', $doc_id)->update($updateData);
+    return true;
 
 
 
@@ -665,8 +694,174 @@ $type = $educ->doc_type;
 
 private function updateProfessionalDocuments($data){
 
+
+    $doc_id = strip_tags($data['doc_id']);
+    $doc_owner_id = strip_tags($data['docOwnerId']);
+    if (isset($data['file'])) {
+        $validator = Validator::make($data, [
+            'file' => 'required|mimes:pdf|max:2048', // Validate the 'file'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Only PDF files are allowed and size must not exceed 2MB'], 422);
+        }
+
+
+        $prof = ProfessionalDocuments::join('document_owners', 'document_owners.id', '=', 'professional_documents.doc_owner_id')
+    ->where('professional_documents.id', $doc_id) // Specify the table for clarity
+    ->where('document_owners.id', $doc_owner_id) // This assumes you meant to filter by the owner's ID explicitly
+    ->first();
+
+        if ($prof && $prof->doc_path) {
+            $prof_path = public_path($prof->doc_path);
+
+            if (file_exists($prof_path)) {
+                unlink($prof_path); // Delete the file
+            }
+$name = $prof->docOwnerFirstName;
+$type = $prof->doc_type;
+
+        }
+        $file = $data['file'];
+        $ext = $file->getClientOriginalExtension();
+        $newFileName = time() . '_' . 'updated' . '/'.$name;
+        $path = 'uploads/docs/' . $newFileName . "_$type" . '.' . $ext;
+        $file->move(public_path('uploads/docs'), $path);
+
+        // Continue with any other logic after file deletion
+    }
+
+
+
+
+    $updateData = [
+        'doc_type' => 'prof',
+        'status' => 'submitted',
+        'updated_at' => now(),
+        'uploaded_by_user_id' => Auth::user()->id,
+        'doc_owner_id'=>strip_tags($doc_owner_id),
+    ];
+
+
+
+
+    if (isset($data['studentIdProf'])) {
+        $updateData['studentIdProf'] = strip_tags($data['studentId']);
+    }
+
+    if (isset($data['qualificationProf'])) {
+        $updateData['qualification'] = strip_tags($data['qualificationProf']);
+    }
+
+    if (isset($data['enrolmentStatusProf'])) {
+        $updateData['enrollment_status'] = strip_tags($data['enrolmentStatusProf']);
+    }
+
+    if (isset($data['schoolNameProf'])) {
+        $updateData['doc_verifier_name'] = strip_tags($data['schoolNameProf']);
+    }
+
+    if (isset($data['schoolCountryProf'])) {
+        $updateData['country_code'] = strip_tags($data['schoolCountryProf']);
+    }
+
+    if (isset($data['profCourse'])) {
+        $updateData['course'] = strip_tags($data['profCourse']);
+    }
+
+    if (isset($data['enrollmentYearProf'])) {
+        $updateData['start_year'] = strip_tags($data['enrollmentYearProf']);
+    }
+
+    if (isset($data['graduationYearProf'])) {
+        $updateData['end_year'] = strip_tags($data['graduationYearProf']);
+    }
+
+    if (isset($data['addInfoProf'])) {
+        $updateData['add_info'] = strip_tags($data['addInfo']);
+    }
+
+    if (isset($path)) {
+        $updateData['doc_path'] = $path;
+    }
+
+
+    $prof->where('id', '=', $doc_id)->update($updateData);
+
+    return true;
+
 }
 private function updateFinancialDocument($data){
+
+    $doc_id = strip_tags($data['doc_id']);
+    $doc_owner_id = strip_tags($data['docOwnerId']);
+    if (isset($data['file'])) {
+        $validator = Validator::make($data, [
+            'file' => 'required|mimes:pdf|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Only PDF files are allowed and size must not exceed 2MB'], 422);
+        }
+
+
+        $fin = FinancialDocuments::join('document_owners', 'document_owners.id', '=', 'financial_document.doc_owner_id')
+    ->where('financial_document.id', $doc_id)
+    ->where('document_owners.id', $doc_owner_id)
+    ->first();
+
+
+    if ($fin && $fin->doc_path) {
+        $fin_path = public_path($fin->doc_path);
+
+        if (file_exists($fin_path)) {
+            unlink($fin_path); // Delete the file
+        }
+$name = $fin->docOwnerFirstName;
+$type = $fin->doc_type;
+
+    }
+    $file = $data['file'];
+    $ext = $file->getClientOriginalExtension();
+    $newFileName = time() . '_' . 'updated' . '/'.$name;
+    $path = 'uploads/docs/' . $newFileName . "_$type" . '.' . $ext;
+    $file->move(public_path('uploads/docs'), $path);
+
+    }
+
+
+
+    $updateData = [
+        'doc_type' => 'fin',
+        'status' => 'submitted',
+        'updated_at' => now(),
+        'uploaded_by_user_id' => Auth::user()->id,
+        'doc_owner_id'=>strip_tags($doc_owner_id),
+    ];
+
+
+    if (isset($data['finName'])) {
+        $updateData['bank_name'] = strip_tags($data['finName']);
+    }
+
+    if (isset($data['finCountry'])) {
+        $updateData['country_code'] = strip_tags($data['finCountry']);
+    }
+
+    if (isset($data['finInfo'])) {
+        $updateData['description'] = strip_tags($data['finInfo']);
+    }
+
+
+    if (isset($path)) {
+        $updateData['doc_path'] = $path;
+    }
+
+
+    $fin->where('id', '=', $doc_id)->update($updateData);
+
+    return true;
+
 
 }
 
@@ -679,34 +874,38 @@ public function docUpdate(request $request){
         'doc_id' => 'string|required',
 
     ]);
+
     $record = [];
+    $check = false;
 
     if(isset($data['firstName']) &&$data['firstName']!=null){
         $record['docOwnerFirstName']=strip_tags( $data['firstName']);
+        $check = true;
 
 
     }
     if(isset($data['lastName'])&&$data['lastName']!=null){
         $record['docOwnerLastName']= strip_tags($data['lastName']);
+        $check = true;
 
 
     }
     if(isset($data['middleName'])&&$data['middleName']!=null){
         $record['docOwnerMiddleName']= strip_tags($data['middleName']);
-
+        $check = true;
 
 
     }
     if(isset($data['dob']) &&$data['dob']!=null){
         $record['docOwnerDOB']= strip_tags($data['dob']);
-
+        $check = true;
 
     }
-
-    $owner = document_owner::find(strip_tags($data['docOwnerId']));
-    if($owner){
-        $owner->update($record);
+    if($check === true){
+        $this->updateDocOwner($record, $data);
     }
+
+
 
     if(isset($data['schoolNameEduc']) && $data['schoolNameEduc']!=null
     ||isset($data['schoolCountryEduc'])&& $data['schoolCountryEduc']!==null
