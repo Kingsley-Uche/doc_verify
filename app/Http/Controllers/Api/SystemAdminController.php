@@ -327,7 +327,7 @@ public function login(Request $request)
             return response()->json(['errors' => $validator->errors()], 422);
         } else {
             $validatedData = $validator->validated();
-            $password = Hash::make('123456');
+            $password = Hash::make('1234567');
 
             $admin = SystemAdminModel::create([
                 'firstName' => strip_tags($validatedData['firstName']),

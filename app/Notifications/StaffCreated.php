@@ -6,17 +6,19 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Otp;
 
-class EmailVerificationNotification extends Notification implements ShouldQueue
+class StaffCreated extends Notification implements ShouldQueue
 {
     use Queueable;
+
+
 
     public $message;
     public $subject;
     public $fromEmail;
     public $mailer;
     public $otp;
+
 
     /**
      * Create a new notification instance.
@@ -26,11 +28,11 @@ class EmailVerificationNotification extends Notification implements ShouldQueue
     public function __construct()
     {
         //
-        $this->message = 'Use the verification code to confirm your email';
-        $this->subject='Verification needed';
+
+        $this->message = 'Welcome to Documents Verification. Your default password is : 1234567 but you are advised to change it to a secure password.Thank you.';
+        $this->subject='Welcome onboard';
         $this->fromEmail=env('MAIL_FROM_NAME');
         $this->mailer= env('mailer');
-        $this->otp = new Otp;
 
     }
 
@@ -53,16 +55,11 @@ class EmailVerificationNotification extends Notification implements ShouldQueue
      */
     public function toMail($notifiable)
     {
-        $otp =$this->otp->generate($notifiable->email,6,5);
         return (new MailMessage)
-            ->mailer(env('MAIL_MAILER'))
-            ->subject($this->subject)
-            ->greeting('Hello,'.$notifiable->first_name)
-            ->line($this->message)
-            ->line('code :'.$otp->token);
-                    // ->line('The introduction to the notification.')
-                    // ->action('Notification Action', url('/'))
-                    // ->line('Thank you for using our application!');
+        ->mailer(env('MAIL_MAILER'))
+        ->subject($this->subject)
+        ->greeting('Hello,'.$notifiable->first_name)
+        ->line($this->message);
     }
 
     /**

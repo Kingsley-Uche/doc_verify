@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\category_user;
+use App\Notifications\StaffCreated;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use App\Models\category_user;
 
 class StaffController extends Controller
 {
@@ -77,7 +78,7 @@ class StaffController extends Controller
 
 
         $validatedData = $validator->validated();
-            $password = Hash::make('123456');
+            $password = Hash::make('1234567');
             if($user->user_company_id!==null){
                 $staff =User::create([
                     'firstName' => strip_tags($validatedData['firstName']),
@@ -104,6 +105,7 @@ class StaffController extends Controller
 
                     $staff->update(['category_id'=>$category_id]);
                 $token =$staff->createToken('api-token')->plainTextToken;
+                $staff->notify(new StaffCreated);
 
                     $data['token']=$token;
                     $data['user']=$staff;
