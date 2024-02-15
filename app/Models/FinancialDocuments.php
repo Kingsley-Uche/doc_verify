@@ -21,6 +21,7 @@ class FinancialDocuments extends Model
         'ref_id',
         'application_id',
         'uploaded_by_user_id',
+        'verify_info',
 
 
     ];

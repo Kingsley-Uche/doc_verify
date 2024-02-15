@@ -258,28 +258,30 @@ unset ($validator);
 
     }
 
-    private function saveDocument($type, Request $request, $key, $value, $docOwnerId, $path)
+    private function saveDocument($type, Request $request, $key, $value, $docOwnerId, $path,)
     {
+        $referer_inst = $request->input('referer', 'default');
         switch ($type) {
             case 'educ':
-                $this->saveEducationalDocument($request, $key, $value, $docOwnerId, $path);
+                $this->saveEducationalDocument($request, $key, $value, $docOwnerId, $path, $referer_inst);
                 break;
             case 'prof':
-                $this->saveProfessionalDocument($request, $key, $value, $docOwnerId, $path);
+                $this->saveProfessionalDocument($request, $key, $value, $docOwnerId, $path, $referer_inst);
                 break;
             case 'finance':
 
-                $this->saveFinancialDocument($request, $key, $value, $docOwnerId, $path);
+                $this->saveFinancialDocument($request, $key, $value, $docOwnerId, $path,$referer_inst);
                 break;
             // Add more cases as needed...
         }
     }
 
-    private function saveEducationalDocument(Request $request, $key, $value, $docOwnerId, $path)
+    private function saveEducationalDocument(Request $request, $key, $value, $docOwnerId, $path,$referer_inst)
     {
         // Save educational documents
         if($request->schoolNameEduc){
             $data = $request->all();
+            $referer_inst = $request->input('type', 'default');
 
         EducationalDocuments::create([
              'course'=>strip_tags($data['courseOrSubject'][$key]),
@@ -291,7 +293,7 @@ unset ($validator);
              'exam_board' => isset($data['examBoard'][$key]) ? strip_tags($data['examBoard'][$key]) : null,
              'verifier_name' => strip_tags($data['schoolNameEduc'][$key]),
              'verifier_id'=>null,
-             'viewer_code'=>null,
+             'viewer_code'=>strip_tags($referer_inst),
              'verifier_city' => strip_tags($data['schoolCity'][$key]),
              'status'=>'submitted',
              'ref_id'=> strip_tags($request->firstName).'/'.substr(md5(uniqid(rand(),true)),0,8),
@@ -309,9 +311,10 @@ unset ($validator);
         }
     }
 
-    private function saveProfessionalDocument(Request $request, $key, $value, $docOwnerId, $path)
+    private function saveProfessionalDocument(Request $request, $key, $value, $docOwnerId, $path, $referer_inst)
     {
         $data =$request->all();
+
         if($request['schoolNameProf']){
 
             // Save professional documents
@@ -322,7 +325,7 @@ unset ($validator);
                 'studentId' =>strip_tags($data['studentIdProf'][$key]),
                 'doc_verifier_name' =>strip_tags($data['schoolNameProf'][$key]),
                 'doc_verifier_id'=>null,
-                'viewer_code'=>null,
+                'viewer_code'=>strip_tags($referer_inst),
                 'enrollment_status' =>strip_tags($data['enrolmentStatusProf'][$key]),
                 'qualification'=>strip_tags($data['qualificationProf'][$key]),
                 'status'=>'submitted',
@@ -341,11 +344,12 @@ unset ($validator);
 
     }
 
-    private function saveFinancialDocument(Request $request, $key, $value, $docOwnerId, $path)
+    private function saveFinancialDocument(Request $request, $key, $value, $docOwnerId, $path,$referer_inst)
     {
         $data = $request->all();
 
 if($data['finName']){
+    $referer_inst = $request->input('type', 'default');
 
 
 
@@ -359,6 +363,7 @@ if($data['finName']){
         'status'=>'submitted',
         'created_at' => now(),
         'updated_at' => now(),
+        'viewer_code'=>strip_tags($referer_inst),
         'uploaded_by_user_id'=>Auth::user()->id,
     ]);
 
@@ -469,7 +474,7 @@ return $educational_files;
     }
 
 
-    
+
 
     private function getProfessionalDocuments($docOwnerId, $type=null, $value, $doc_id){
 

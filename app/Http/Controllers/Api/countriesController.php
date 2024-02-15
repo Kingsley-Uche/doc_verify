@@ -23,8 +23,6 @@ class CountriesController extends Controller
             //it is from our frontend
         }else{
 
-dd($request->all());
-            //it is not from our frontend
             return response()->json(['message' => 'Invalid Access'],400);
         }
     }

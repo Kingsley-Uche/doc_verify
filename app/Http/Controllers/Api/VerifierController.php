@@ -409,7 +409,8 @@ public function verify_document(request $request){
     $validator = Validator::make($request->all(), [
         'type' => 'required|string',
         'id' => 'string|required',
-
+        'verify_info'=>'string|required|max:1200',
+        'status' => 'required|in:pending,verified,queried,archived',
     ]);
 
     if ($validator->fails()) {
@@ -420,18 +421,19 @@ public function verify_document(request $request){
 
     $type =strip_tags($request->type);
     $doc_id = strip_tags($request->id);
+    $status =strip_tags($request->status);
 
 
     switch ($type) {
         case 'educ':
-            $this->verify_educational_document($type, $doc_id);
+            $this->verify_educational_document($type, $doc_id,$status);
             break;
         case 'prof':
-            $this->verify_professional_document($type, $doc_id);
+            $this->verify_professional_document($type, $doc_id,$status);
             break;
         case 'finance':
 
-            $this->verify_financial_document($type,$doc_id);
+            $this->verify_financial_document($type,$doc_id,$status);
             break;
 
     }
@@ -440,7 +442,7 @@ public function verify_document(request $request){
 
 }
 
-private function verify_educational_document($type, $id){
+private function verify_educational_document($type, $id,$status){
     //this verifies educational document
     $user = Auth::user();
     if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
@@ -450,7 +452,7 @@ private function verify_educational_document($type, $id){
 
 if ($document) {
     $document->update([
-        'status' => 'verified',
+        'status' => $status,
         'updated_at' => now(),
     ]);
 }
@@ -459,7 +461,7 @@ return response()->json(['success' =>true,'message'=>'Document verified'], 200);
 
 }
 
-private function verify_professional_document($type, $id){
+private function verify_professional_document($type, $id,$status){
     $user = Auth::user();
     if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
         return response()->json(['error' => 'Unauthorized'], 401);
@@ -470,7 +472,7 @@ private function verify_professional_document($type, $id){
 
 if ($document) {
     $document->update([
-        'status' => 'verified',
+        'status' => $status,
         'updated_at' => now(),
     ]);
 }
@@ -482,7 +484,7 @@ return response()->json(['success' =>true,'message'=>'Document verified'], 200);
 
 }
 
-private function verify_financial_document($type,$id){
+private function verify_financial_document($type,$id,$status){
     $user = Auth::user();
     if (!$user->is_system_admin||!$user->system_admin_type=='admin_1') {
         return response()->json(['error' => 'Unauthorized'], 401);
@@ -492,7 +494,7 @@ private function verify_financial_document($type,$id){
 
 if ($document) {
     $document->update([
-        'status' => 'verified',
+        'status' => $status,
         'updated_at' => now(),
     ]);
 }

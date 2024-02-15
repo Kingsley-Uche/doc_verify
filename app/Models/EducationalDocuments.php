@@ -28,5 +28,6 @@ class EducationalDocuments extends Model
         'exam_board',
         'status',
         'uploaded_by_user_id',
+        'verify_info',
     ];
 }

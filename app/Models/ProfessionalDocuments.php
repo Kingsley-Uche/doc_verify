@@ -26,6 +26,6 @@ class ProfessionalDocuments extends Model
         'status',
         'doc_type',
         'uploaded_by_user_id',
-
+        'verify_info',
     ];
 }

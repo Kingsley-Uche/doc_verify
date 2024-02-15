@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\VerifierController;
 use App\Http\Middleware\SystemManagerMiddleware;
 use App\Http\Controllers\Api\CountriesController;
 use App\Http\Controllers\Api\DocumentsController;
+use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\SystemAdminController;
 use App\Http\Controllers\Api\VerificationController;
 use App\Http\Controllers\Api\ServiceChargeController;
@@ -82,6 +83,8 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
     Route::post('/staff/get/all', [StaffController::class, 'get_all_staff'])->name('staff.get_all');
     Route::post('staff/delete', [StaffController::class, 'delete_staff'])->name('staff.delete');
     Route::post('staff/update', [StaffController::class, 'update_staff'])->name('staff.update');
+    Route::post('monitor/document', [ReferralController::class, 'monitor_document'])->name('document.monitor');
+
 
     //These are only accessible to the system admin
     Route::post('system/admin/base/charge/create', [ServiceChargeController::class, 'createServiceCharge'])

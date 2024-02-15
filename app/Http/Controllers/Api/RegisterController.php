@@ -26,6 +26,8 @@ public function register(request $request){
 
 
 
+
+
     if($request->input('category')==='org'){
         //It is an organization so send it to organization register method
         //return response()->json(['message' => 'valid user'], 200);
