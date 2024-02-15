@@ -26,8 +26,12 @@ class surChargeController extends Controller
          }
 
          }
-         public function save_surcharge(request $request){
 
+
+
+
+         public function save_surcharge(request $request){
+                $data = $request->all();
             $user = Auth::user();
             $validator = Validator::make($request->all(), [
                 'institution_id'=>'required|min:0',
@@ -38,10 +42,18 @@ class surChargeController extends Controller
 
             }
 
-            $save_surcharge = SurchargeModel::create(
+            $status = SurchargeModel::where('institution_id', '=', strip_tags($data['institution_id']))->first();
+
+if($status){
+    return response()->json(['message'=>'Surcharge already exists please update need be.', 'success'=>false, ],401);
+
+
+
+}
+  $save_surcharge = SurchargeModel::create(
                 ['institution_id'=>strip_tags($request->institution_id),
                 'institution_charge' =>strip_tags(strtolower(round($request->institution_charge))),
-                'institution_created_admin'=>$user->id,
+                'institution_created_admin_id'=>$user->id,
                 ]
             );
 
@@ -72,7 +84,38 @@ class surChargeController extends Controller
             return response()->json(['message'=>'Surcharge updated successfully', 'success'=>true, ],201);
          }
 
+
+
+
          public function view_surchage(request $request){
+            $data = $request->all();
+
+            $rules = [
+                'getter_type' => 'required|string',
+            ];
+
+            if (isset($data['getter_type']) && $data['getter_type'] === 'single') {
+                $rules['institution_id'] = 'required|string';
+            }
+
+            $validator = Validator::make($data, $rules);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+
+            $query = SurchargeModel::join('institutions', 'institutions.id', '=', 'surcharge_models.institution_id')
+                ->select('institutions.id as instId', 'institutions.name as instName', 'surcharge_models.id as surchargeId', 'surcharge_models.institution_charge');
+
+            if (isset($data['getter_type']) && $data['getter_type'] === 'single') {
+                $institutionId = strip_tags($data['institution_id']);
+                $query->where('institutions.id', '=', $institutionId);
+            }
+
+            $surcharge = $query->get();
+
+            return response()->json(['data' => $surcharge, 'success' => true], 200);
 
 
          }
