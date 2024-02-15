@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class serviceCharge extends Model
 {
     use HasFactory;
-protected $fillable = ['doc_cat','doc_charge','category_user_id','created_admin_id'];
+protected $fillable = ['doc_cat','doc_charge','category_user','created_admin_id'];
 }

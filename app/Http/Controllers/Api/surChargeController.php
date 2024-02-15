@@ -45,7 +45,7 @@ class surChargeController extends Controller
             $status = SurchargeModel::where('institution_id', '=', strip_tags($data['institution_id']))->first();
 
 if($status){
-    return response()->json(['message'=>'Surcharge already exists please update need be.', 'success'=>false, ],401);
+    return response()->json(['message'=>'Surcharge already exists. Please update  if need be.', 'success'=>false, ],401);
 
 
 

@@ -28,6 +28,7 @@ class ServiceChargeController extends Controller
     }
     public function createServiceCharge(request $request){
 
+        $user_id = Auth::user()->id;
         $validator = Validator::make($request->all(), [
             'docCateg' => 'required|array|max:255',
             'docCateg.*' => 'required|string|max:255',
@@ -38,7 +39,17 @@ class ServiceChargeController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
-        } else {
+        }
+
+        $status = serviceCharge::where('created_admin_id', '=', $user_id)->where('category_user', '=',strip_tags($request->category_user))->first();
+
+        if($status){
+            return response()->json(['message'=>'Service charge already exists. please update if  need be.', 'success'=>false, ],401);
+
+
+
+        }
+
         $doc =$request->input('docCateg');
         $base_charge = $request->input('baseCharge');
         $category_user = $request->input('category_user');
@@ -57,7 +68,7 @@ $i++;
         return response()->json(['success' =>true,'message'=>'Service charge created successfully'], 201);
 
 
-    }
+
 
 
 }
@@ -74,6 +85,7 @@ private function save_charge($doc_category,$doc_charge,$category_user){
 
 
     ]);
+    return true;
 
 
 }
@@ -117,13 +129,13 @@ public function edit_charge(request $request)
 }
 
 private function update_charge($doc_category, $doc_charge,$category_user,$id){
-    $status =serviceCharge::where('id', '=',$id)->update([
+    serviceCharge::where('id', '=',$id)->update([
         'doc_cat'=>$doc_category,
         'doc_charge'=>$doc_charge,
         'category_user'=>$category_user,
         'updated_at'=>now(),
     ]);
-
+return true;
 
 }
 public function view_service_charge(){
