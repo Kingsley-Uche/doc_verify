@@ -146,6 +146,36 @@ public function view_service_charge(){
 }
 
 
+public function single_edit(request $request){
+    $validator = Validator::make($request->all(), [
+        'docCateg' => 'required|string|max:255',
+        'baseCharge' => 'required|numeric|between:1,100000.99',
+        'category_user'=>'required|string',
+        'doc_id'=>'required|numeric',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+
+    }
+    $data = $request->all();
+    $doc_category = strtolower(strip_tags($data['docCateg']));
+    $base_charge = round(strip_tags($data['baseCharge']),2);
+    $category_user = strip_tags($data['category_user']);
+    $doc_id = strip_tags($data['doc_id']);
+
+    serviceCharge::where('id', '=',$doc_id)->update([
+        'doc_cat'=>$doc_category,
+        'doc_charge'=>$base_charge,
+        'category_user'=>$category_user,
+        'updated_at'=>now(),
+    ]);
+
+
+    return response()->json(['success'=>true, 'message'=>'update successful'], 201);
+
+
+}
 
 
 }

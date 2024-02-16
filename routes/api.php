@@ -93,7 +93,7 @@ Route::middleware(['api', 'auth:sanctum', 'api.authenticate'])->group(function (
     ->name('view.charge');
     //Create service Charge
 
-    Route::post('system/admin/base/charge/update', [ServiceChargeController::class, 'edit_charge'])
+    Route::post('system/admin/base/charge/update', [ServiceChargeController::class, 'single_edit'])
     ->name('view.edit');
 //create surcharge
 
@@ -138,7 +138,7 @@ Route::post('system/admin/surcharge/create', [surChargeController::class, 'save_
     ->name('verify.document');
     Route::post('system/admin/update/document', [VerifierController::class,'docUpdate'])->name('update.document');
 
-    Route::get('system/admin/create/admin', [SystemAdminController::class, 'create_admin'])
+    Route::post('system/admin/create/admin', [SystemAdminController::class, 'create_admin'])
     ->name('create.admin');
     Route::get('system/admin/view/admin', [SystemAdminController::class, 'view_all_admin'])
     ->name('view.admin');

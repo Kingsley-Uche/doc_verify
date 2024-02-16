@@ -793,6 +793,7 @@ $type = $prof->doc_type;
     return true;
 
 }
+
 private function updateFinancialDocument($data){
 
     $doc_id = strip_tags($data['doc_id']);
